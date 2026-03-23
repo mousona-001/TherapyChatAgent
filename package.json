@@ -1,0 +1,19 @@
+{
+  "name": "therapychat-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "clean": "turbo clean",
+    "test:crisis": "turbo test:crisis",
+    "db:push": "turbo db:push",
+    "db:studio": "turbo db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.20",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "pnpm@10.24.0"
+}
