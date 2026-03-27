@@ -23,7 +23,7 @@ export class CrisisService {
     const [patient] = await this.dbClient
       .select()
       .from(patientProfile)
-      .where(eq(patientProfile.id, patientId));
+      .where(eq(patientProfile.userId, patientId));
 
     if (!patient) {
       this.logger.error(`Cannot escalate: Patient ${patientId} not found.`);
@@ -62,7 +62,7 @@ export class CrisisService {
       const [patient] = await this.dbClient
         .select()
         .from(patientProfile)
-        .where(eq(patientProfile.id, patientId));
+        .where(eq(patientProfile.userId, patientId));
 
       if (patient?.emergencyContactPhone) {
         await this.sendEmergencyContactSms(patient);

@@ -33,12 +33,16 @@ function enforceLength(text: string): string {
   return sentences.slice(0, 2).join(' ').trim();
 }
 
-// ─── Layer 3: Topic Containment Secondary LLM ────────────────────────────────
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+// ─── Layer 3: Topic Containment Secondary LLM (lazy-init) ────────────────────
+let _groq: Groq | null = null;
+function getGroq(): Groq {
+  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  return _groq;
+}
 
 async function isOnTopic(text: string): Promise<boolean> {
   try {
-    const result = await groq.chat.completions.create({
+    const result = await getGroq().chat.completions.create({
       model: 'llama-3.1-8b-instant',
       max_tokens: 5,
       messages: [

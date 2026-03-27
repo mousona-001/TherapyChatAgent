@@ -9,7 +9,11 @@
     "clean": "turbo clean",
     "test:crisis": "turbo test:crisis",
     "db:push": "turbo db:push",
-    "db:studio": "turbo db:studio"
+    "db:studio": "turbo db:studio",
+    "proxy": "docker compose up -d nginx",
+    "proxy:stop": "docker compose stop nginx",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
   },
   "devDependencies": {
     "turbo": "^2.8.20",

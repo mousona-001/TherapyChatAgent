@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { db } from '../../database/db';
 import { therapistProfile, patientProfile } from '../../database/schema';
 import { eq } from 'drizzle-orm';
@@ -33,6 +33,20 @@ export class DrizzleProfileAdapter implements IProfilePort {
   }
 
   async createPatientProfile(userId: string, data: PatientProfileData) {
+    // Validate assignedTherapistId exists before inserting (prevents FK constraint 500)
+    if (data.assignedTherapistId) {
+      const [therapist] = await db
+        .select({ id: therapistProfile.id })
+        .from(therapistProfile)
+        .where(eq(therapistProfile.id, data.assignedTherapistId));
+
+      if (!therapist) {
+        throw new BadRequestException(
+          `Therapist with id "${data.assignedTherapistId}" does not exist.`,
+        );
+      }
+    }
+
     const [created] = await db
       .insert(patientProfile)
       .values({
@@ -41,7 +55,7 @@ export class DrizzleProfileAdapter implements IProfilePort {
         phoneNumber: data.phoneNumber,
         bio: data.bio ?? null,
         avatarUrl: data.avatarUrl ?? null,
-        dateOfBirth: data.dateOfBirth ?? null,     // string | null — matches date column
+        dateOfBirth: data.dateOfBirth ?? null,
         gender: data.gender ?? null,
         emergencyContactName: data.emergencyContactName ?? null,
         emergencyContactPhone: data.emergencyContactPhone ?? null,

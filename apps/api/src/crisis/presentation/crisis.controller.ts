@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Query, Logger } from '@nestjs/common';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { CrisisService } from '../application/crisis.service';
 
@@ -10,13 +10,16 @@ export class CrisisController {
 
   /**
    * Twilio posts call status updates here.
-   * Query param `patientId` is embedded in the statusCallback URL.
+   * `patientId` is in the URL query string (embedded when we created the call).
+   * Twilio's form-encoded body contains CallStatus, CallSid, etc.
    */
   @Post('twilio/status')
   @AllowAnonymous()
-  async handleTwilioStatus(@Body() body: Record<string, string>): Promise<string> {
+  async handleTwilioStatus(
+    @Body() body: Record<string, string>,
+    @Query('patientId') patientId: string,
+  ): Promise<string> {
     const callStatus = body['CallStatus'];
-    const patientId = body['patientId']; // passed via URL query param we embed in statusCallback
 
     this.logger.log(`Twilio status callback received: status=${callStatus}, patient=${patientId}`);
 

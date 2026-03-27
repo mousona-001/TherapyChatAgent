@@ -1,0 +1,75 @@
+services:
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: therapychat_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: therapychat
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ── pgAdmin ───────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: therapychat_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@therapychat.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - '5050:80'
+    depends_on:
+      - postgres
+
+  # ── MongoDB ───────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:latest
+    container_name: therapychat_mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+
+  # ── Redis ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: therapychat_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── nginx Reverse Proxy ───────────────────────────────────────────────────────
+  # Routes a single ngrok tunnel to both services:
+  #   /crisis/stream → ws://host:3002  (apps/stream WebSocket)
+  #   /*             → http://host:3001 (apps/api)
+  nginx:
+    image: nginx:alpine
+    container_name: therapychat_nginx
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      # Allows nginx container to reach apps running on the host machine
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
