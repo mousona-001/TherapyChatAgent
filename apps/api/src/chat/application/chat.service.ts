@@ -8,8 +8,8 @@ export class ChatService {
     private readonly therapist: ITherapistPort,
   ) {}
 
-  async processMessage(message: string): Promise<string> {
+  async processMessage(message: string, patientId: string): Promise<string> {
     // Additional business logic could go here before/after relying on infrastructure
-    return this.therapist.getResponse(message);
+    return this.therapist.getResponse(message, patientId);
   }
 }

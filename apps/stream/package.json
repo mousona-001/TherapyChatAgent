@@ -1,0 +1,25 @@
+{
+  "name": "@repo/stream",
+  "version": "1.0.0",
+  "description": "Crisis voice stream microservice — Twilio Media Streams + Deepgram STT + ElevenLabs TTS",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^3",
+    "alawmulaw": "^6",
+    "dotenv": "^17",
+    "groq-sdk": "^0.9",
+    "ioredis": "^5",
+    "ws": "^8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/ws": "^8",
+    "ts-node": "^10",
+    "typescript": "^5"
+  }
+}

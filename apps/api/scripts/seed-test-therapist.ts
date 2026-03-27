@@ -18,23 +18,30 @@ async function seed() {
   const testTherapistId = 'test-therapist-id';
   const testSessionToken = 'test-session-token-123';
 
-  // 1. Create User
-  await db.insert(user).values({
-    id: testUserId,
-    name: 'Test Therapist',
-    email: 'test-therapist@example.com',
-    emailVerified: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }).onConflictDoUpdate({
-    target: user.id,
-    set: { updatedAt: new Date() }
-  });
+  // 1. Create or Get User
+  const existingUser = await db.select().from(user).where(eq(user.email, 'test-therapist@example.com')).limit(1);
+  let userId = testUserId;
+
+  if (existingUser.length > 0) {
+    userId = existingUser[0].id;
+    console.log(`ℹ️ User already exists with email test-therapist@example.com (ID: ${userId})`);
+    await db.update(user).set({ updatedAt: new Date() }).where(eq(user.id, userId));
+  } else {
+    await db.insert(user).values({
+      id: testUserId,
+      name: 'Test Therapist',
+      email: 'test-therapist@example.com',
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log(`✅ Created test user with ID: ${userId}`);
+  }
 
   // 2. Create Therapist Profile
   await db.insert(therapistProfile).values({
     id: testTherapistId,
-    userId: testUserId,
+    userId: userId, // Use the actual userId (either new or existing)
     phoneNumber: '+919999999999',
     bio: 'Experienced therapist for testing.',
     isVerified: true,
@@ -44,20 +51,25 @@ async function seed() {
     updatedAt: new Date(),
   }).onConflictDoUpdate({
     target: therapistProfile.id,
-    set: { updatedAt: new Date() }
+    set: { updatedAt: new Date(), userId: userId }
   });
 
   // 3. Create Session
   await db.insert(session).values({
-    id: 'test-session-id',
-    userId: testUserId,
+    id: `session-${userId}`, // Unique session ID based on userId
+    userId: userId,
     token: testSessionToken,
     expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
     createdAt: new Date(),
     updatedAt: new Date(),
   }).onConflictDoUpdate({
     target: session.id,
-    set: { expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), updatedAt: new Date() }
+    set: { 
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), 
+      updatedAt: new Date(),
+      userId: userId,
+      token: testSessionToken 
+    }
   });
 
   console.log('✅ Test therapist and session seeded!');

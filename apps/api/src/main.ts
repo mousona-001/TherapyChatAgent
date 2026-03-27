@@ -5,44 +5,22 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
-import { WinstonModule } from 'nest-winston';
-import * as winston from 'winston';
-import 'winston-mongodb';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import * as path from 'path';
 
 async function bootstrap() {
   // bodyParser must be disabled for Better Auth to handle raw request bodies
-  const app = await NestFactory.create(AppModule, { 
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
-    logger: WinstonModule.createLogger({
-      transports: [
-        new winston.transports.Console({
-          level: process.env.LOG_LEVEL || 'info',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.ms(),
-            winston.format.colorize(),
-            winston.format.printf(({ timestamp, level, message, context, ms }) => {
-              return `[Nest] ${timestamp} ${level} [${context || 'App'}] ${message} ${ms}`;
-            }),
-          ),
-        }),
-        new winston.transports.MongoDB({
-          db: process.env.MONGODB_URI || 'mongodb://localhost:27017/therapychat_logs',
-          options: { useUnifiedTopology: true },
-          collection: 'logs',
-          level: process.env.LOG_LEVEL || 'info',
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.json(),
-          ),
-        }),
-      ],
-    }),
   });
-  
+
+  // Serve ElevenLabs crisis audio files statically at /audio
+  const audioDir = path.join(process.cwd(), 'public', 'audio');
+  app.useStaticAssets(audioDir, { prefix: '/audio' });
+
   // Enable CORS
   app.enableCors();
-  
+
   // Enforce DTO validation constraints globally for security
   app.useGlobalPipes(new ValidationPipe());
 
@@ -55,7 +33,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  
+
   app.use(
     '/reference',
     apiReference({
@@ -63,13 +41,12 @@ async function bootstrap() {
         content: document,
       },
     }),
-  )
-  
-  const port = process.env.PORT || 3000;
+  );
+
+  const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`🚀 API running on http://localhost:${port}`);
   console.log(`📖 Scalar Docs at http://localhost:${port}/reference`);
 }
 
 bootstrap();
-
