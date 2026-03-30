@@ -7,6 +7,8 @@
 export const PROFILE_PORT = Symbol('PROFILE_PORT');
 
 export type TherapistProfileData = {
+  firstName: string;
+  lastName: string;
   phoneNumber: string;
   bio?: string;
   avatarUrl?: string;
@@ -22,6 +24,8 @@ export type TherapistProfileData = {
 };
 
 export type PatientProfileData = {
+  firstName: string;
+  lastName: string;
   phoneNumber: string;
   bio?: string;
   avatarUrl?: string;
@@ -29,7 +33,6 @@ export type PatientProfileData = {
   gender?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
-  assignedTherapistId?: string;
   reasonForSeeking?: string;
 };
 
@@ -40,4 +43,5 @@ export interface IProfilePort {
   getPatientProfileByUserId(userId: string): Promise<unknown>;
   updateTherapistProfile(userId: string, data: Partial<TherapistProfileData>): Promise<unknown>;
   updatePatientProfile(userId: string, data: Partial<PatientProfileData>): Promise<unknown>;
+  resetPhoneVerification(userId: string): Promise<void>;
 }

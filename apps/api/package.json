@@ -12,7 +12,9 @@
     "test:crisis": "ts-node scripts/test-crisis.ts",
     "test:optimize": "ts-node scripts/prompts/optimizer.ts",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:purge": "ts-node scripts/purge-db.ts",
+    "seed:therapists": "ts-node scripts/seed-therapists.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,7 +30,9 @@
     "@nestjs/core": "^11.1.17",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/platform-socket.io": "^11.1.17",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/websockets": "^11.1.17",
     "@scalar/nestjs-api-reference": "^1.1.4",
     "@thallesp/nestjs-better-auth": "^2.4.0",
     "better-auth": "^1.5.5",
@@ -47,6 +51,7 @@
     "razorpay": "^2.9.6",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "socket.io": "^4.8.3",
     "twilio": "^5.13.1",
     "winston": "^3.19.0",
     "winston-mongodb": "^7.0.1"

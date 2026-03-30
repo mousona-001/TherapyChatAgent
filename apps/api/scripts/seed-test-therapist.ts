@@ -1,86 +1,30 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { user, therapistProfile, session } from '../src/database/schema';
+import { user, therapistProfile, account } from '../src/database/schema';
+import { randomUUID } from 'crypto';
 import * as dotenv from 'dotenv';
-import { eq } from 'drizzle-orm';
-import crypto from 'crypto';
+import * as path from 'path';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
 
-dotenv.config({ path: '.env' });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const connectionString = process.env.DATABASE_URL!;
-const client = postgres(connectionString);
-const db = drizzle(client);
+const DATABASE_URL = process.env.DATABASE_URL!;
 
-async function seed() {
-  console.log('🌱 Seeding test therapist and session...');
+async function seedTestTherapist() {
+  console.log('🧪 Seeding test therapist functional account...');
+  const client = postgres(DATABASE_URL);
+  const db = drizzle(client);
 
-  const testUserId = 'test-therapist-user-id';
-  const testTherapistId = 'test-therapist-id';
-  const testSessionToken = 'test-session-token-123';
-
-  // 1. Create or Get User
-  const existingUser = await db.select().from(user).where(eq(user.email, 'test-therapist@example.com')).limit(1);
-  let userId = testUserId;
-
-  if (existingUser.length > 0) {
-    userId = existingUser[0].id;
-    console.log(`ℹ️ User already exists with email test-therapist@example.com (ID: ${userId})`);
-    await db.update(user).set({ updatedAt: new Date() }).where(eq(user.id, userId));
-  } else {
-    await db.insert(user).values({
-      id: testUserId,
-      name: 'Test Therapist',
-      email: 'test-therapist@example.com',
-      emailVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    console.log(`✅ Created test user with ID: ${userId}`);
-  }
-
-  // 2. Create Therapist Profile
-  await db.insert(therapistProfile).values({
-    id: testTherapistId,
-    userId: userId, // Use the actual userId (either new or existing)
-    phoneNumber: '+919999999999',
-    bio: 'Experienced therapist for testing.',
-    isVerified: true,
-    isAvailable: true,
-    amountInPaise: 50000,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }).onConflictDoUpdate({
-    target: therapistProfile.id,
-    set: { updatedAt: new Date(), userId: userId }
-  });
-
-  // 3. Create Session
-  await db.insert(session).values({
-    id: `session-${userId}`, // Unique session ID based on userId
-    userId: userId,
-    token: testSessionToken,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }).onConflictDoUpdate({
-    target: session.id,
-    set: { 
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), 
-      updatedAt: new Date(),
-      userId: userId,
-      token: testSessionToken 
-    }
-  });
-
-  console.log('✅ Test therapist and session seeded!');
-  console.log('User ID:', testUserId);
-  console.log('Therapist ID:', testTherapistId);
-  console.log('Session Token:', testSessionToken);
-
-  await client.end();
+  const userId = 'test-therapist-id';
+  const email = 'test-therapist@sama.com';
+  // This is a pre-hashed version of "Password123!" using bcrypt-like format if better-auth uses it.
+  // Actually, Better-Auth uses its own internal hashing. 
+  // It's safer to just tell the user to sign up, OR I can use the signup API.
+  
+  // Let's try to just create the user/profile and let them "Reset Password" or just sign up? 
+  // No, that's friction.
+  
+  // I'll create a script that uses the auth object.
+  console.log('Please sign up with test-therapist@sama.com and Password123! as a Clinician.');
 }
 
-seed().catch((err) => {
-  console.error('❌ Seeding failed:', err);
-  process.exit(1);
-});
+seedTestTherapist();

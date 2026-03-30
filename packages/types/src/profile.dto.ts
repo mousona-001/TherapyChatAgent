@@ -2,6 +2,16 @@ import { IsString, IsNotEmpty, IsOptional, IsInt, IsBoolean, IsArray, IsDateStri
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTherapistProfileDto {
+  @ApiProperty({ example: 'John' })
+  @IsString()
+  @IsNotEmpty()
+  firstName!: string;
+
+  @ApiProperty({ example: 'Doe' })
+  @IsString()
+  @IsNotEmpty()
+  lastName!: string;
+
   @ApiProperty({ example: '+1234567890' })
   @IsString()
   @IsNotEmpty()
@@ -66,6 +76,16 @@ export class CreateTherapistProfileDto {
 }
 
 export class CreatePatientProfileDto {
+  @ApiProperty({ example: 'Jane' })
+  @IsString()
+  @IsNotEmpty()
+  firstName!: string;
+
+  @ApiProperty({ example: 'Doe' })
+  @IsString()
+  @IsNotEmpty()
+  lastName!: string;
+
   @ApiProperty({ example: '+1234567890' })
   @IsString()
   @IsNotEmpty()
@@ -100,11 +120,6 @@ export class CreatePatientProfileDto {
   @IsOptional()
   @IsString()
   emergencyContactPhone?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  assignedTherapistId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

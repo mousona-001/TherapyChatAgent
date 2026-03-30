@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TherapyChat | Demo Dashboard</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+            --text-mute: #94a3b8;
+        }
+
+        * { box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        header { padding: 1rem 2rem; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 600; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+Lines 24
+        
+        main { flex: 1; display: grid; grid-template-columns: 350px 1fr 300px; gap: 1px; background: var(--glass-border); }
+        
+        /* Sidebar: Recommendations & Connections */
+        .sidebar { background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem; overflow-y: auto; }
+        .card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem; }
+        .card h3 { margin: 0 0 1rem 0; font-size: 1.1rem; color: #818cf8; }
+        
+        .search-box { position: relative; margin-bottom: 1rem; }
+        input[type="text"] { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.8rem; color: white; outline: none; transition: 0.2s; }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        
+        .therapist-list { display: flex; flex-direction: column; gap: 0.8rem; }
+        .therapist-item { padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid transparent; cursor: pointer; transition: 0.2s; }
+        .therapist-item:hover { background: rgba(255,255,255,0.06); border-color: var(--glass-border); }
+        .therapist-name { font-weight: 600; font-size: 0.95rem; }
+        .therapist-meta { font-size: 0.8rem; color: var(--text-mute); margin-top: 4px; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-left: 5px; }
+        .online { background: #10b98122; color: #10b981; }
+        
+        /* Chat Area */
+        .chat-container { background: #0b1120; display: flex; flex-direction: column; height: 100%; }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+        .msg { max-width: 70%; padding: 0.8rem 1.2rem; border-radius: 16px; line-height: 1.5; font-size: 0.95rem; position: relative; }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg.ai { background: var(--glass); border: 1px solid var(--glass-border); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg.system { align-self: center; background: rgba(255,255,255,0.05); color: var(--text-mute); font-size: 0.8rem; border-radius: 20px; padding: 4px 12px; }
+        
+        .chat-input { padding: 1.5rem 2rem; background: var(--bg); border-top: 1px solid var(--glass-border); display: flex; gap: 1rem; }
+        .chat-input input { flex: 1; }
+        .btn-send { background: var(--primary); border: none; padding: 0 1.5rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-send:hover { background: var(--primary-dark); }
+        
+        /* Right Panel: Context & Memory */
+        .right-panel { background: var(--bg); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; border-left: 1px solid var(--glass-border); }
+        .stat-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-mute); font-weight: 600; letter-spacing: 0.05em; }
+        .stat-value { font-size: 0.9rem; }
+        
+        #debug-console { position: fixed; bottom: 0; left: 0; right: 0; height: 40px; background: #000; font-family: monospace; font-size: 11px; color: #0f0; padding: 10px; opacity: 0.7; overflow: hidden; pointer-events: none; transition: 0.3s; }
+        #debug-console:hover { height: 150px; opacity: 1; pointer-events: all; overflow-y: auto; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">TherapyChat AI</div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div id="status" class="badge disconnected">Disconnected</div>
+            <button onclick="seedDemoData()" style="background: #10b981; border: none; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">🌱 Seed Demo Data</button>
+            <select id="user-role" onchange="switchRole()" style="background: #1e293b; color: white; border: 1px solid var(--glass-border); padding: 5px; border-radius: 4px;">
+                <option value="patient">Login as Patient</option>
+                <option value="therapist">Login as Therapist</option>
+            </select>
+            <button onclick="clearChat()" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Clear Chat</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="sidebar">
+            <div class="card">
+                <h3>🔍 Find a Therapist</h3>
+                <div class="search-box">
+                    <input type="text" id="search-query" placeholder="e.g. Anxiety specialist" onkeypress="if(event.key==='Enter') searchTherapists()">
+                </div>
+                <div id="rec-list" class="therapist-list">
+                    <div class="system" style="padding: 10px; text-align: center;">Enter a query to see weighted recommendations</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 id="conn-title">🤝 My Connections</h3>
+                <div id="conn-list" class="therapist-list">
+                    <div class="system" style="padding: 10px; text-align: center;">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div id="chat-messages">
+                <div class="msg system">Welcome to TherapyChat. All conversations are private and secure.</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="Type your message..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <button class="btn-send" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="card">
+                <h3>🧠 Session Memory</h3>
+                <div class="stat-group">
+                    <div class="stat-label">Emotional State</div>
+                    <div id="mem-emotion" class="stat-value">Determining...</div>
+                </div>
+                <div class="stat-group" style="margin-top: 1rem;">
+                    <div class="stat-label">Session Summary</div>
+                    <div id="mem-summary" class="stat-value" style="font-size: 0.8rem; color: var(--text-mute);">AI is analyzing the conversation flow...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>👤 Current Persona</h3>
+                <div id="persona-info" class="stat-value">AI Generalist</div>
+                <div id="persona-disclosure" style="font-size: 0.75rem; margin-top: 10px; color: var(--text-mute); line-height: 1.4;">
+                    Connected to general empathy model. Select a therapist to enable persona mode.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="debug-console">System logs will appear here...</div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        let socket = null;
+        let currentSessionId = null;
+        let currentStatus = 'DISCONNECTED';
+
+        // Global Error Catcher
+        window.onerror = function(msg, url, line) {
+            log('error', `JS Error: ${msg} (line ${line})`);
+            return false;
+        };
+
+        function initSocket() {
+            try {
+                if (typeof io === 'undefined') {
+                    log('error', 'Socket.io script failed to load! Check internet/CDN.');
+                    return;
+                }
+
+                if (socket) socket.disconnect();
+                
+                const role = document.getElementById('user-role') ? document.getElementById('user-role').value : 'patient';
+                const token = role === 'therapist' ? 'demo-token-therapist' : 'demo-token';
+                
+                log('system', `WebSocket: Connecting as ${role}...`);
+                socket = io(`${API_URL}/chat`, {
+                    auth: { token },
+                    reconnection: true,
+                    reconnectionAttempts: 10
+                });
+
+                socket.on('connect', () => {
+                    currentStatus = 'CONNECTED';
+                    updateStatusUI();
+                    log('success', `WebSocket connected! ID: ${socket.id}`);
+                });
+
+                socket.on('disconnect', (reason) => {
+                    currentStatus = 'DISCONNECTED';
+                    updateStatusUI();
+                    log('error', `WebSocket disconnected: ${reason}`);
+                });
+
+                socket.on('connect_error', (err) => {
+                    log('error', `Connection failed: ${err.message}`);
+                });
+
+                socket.on('chat:token', (data) => {
+                    updateStreamingMessage(data.token);
+                });
+
+                socket.on('chat:message_complete', (data) => {
+                    finalizeStreamingMessage(data.content);
+                    updateMemory();
+                });
+
+                socket.on('chat:message', (data) => {
+                    const myRole = document.getElementById('user-role').value;
+                    const isIncoming = (myRole === 'patient' && data.role !== 'patient') || (myRole === 'therapist' && data.role === 'patient');
+                    addMessage(isIncoming ? 'ai' : 'user', data.content || data.text);
+                });
+
+                socket.on('chat:therapist_joined', (data) => {
+                    addMessage('system', data.message);
+                    document.getElementById('persona-name').innerText = 'Human Therapist';
+                    document.getElementById('persona-desc').innerText = 'You are now talking to a real practitioner. AI is inactive.';
+                });
+                socket.on('chat:ai_mode', (data) => {
+                    addMessage('system', data.reason);
+                    document.getElementById('persona-name').innerText = 'AI Therapist';
+                    document.getElementById('persona-desc').innerText = 'AI has resumed coverage.';
+                });
+                socket.on('message:notification', (data) => {
+                    log('success', `Notification: New message in session ${data.sessionId.slice(0,8)}...`);
+                    // Simple toast-like effect in debug console or alert
+                    if (document.getElementById('user-role').value === 'therapist') {
+                        alert(`New message from patient: "${data.content.slice(0, 30)}..."`);
+                    }
+                });
+
+                socket.on('error', (err) => log('error', `Server error: ${err.message || err}`));
+
+            } catch (e) {
+                log('error', `Init failed: ${e.message}`);
+            }
+        }
+
+        function updateStatusUI() {
+            const el = document.getElementById('status');
+            if (!el) return;
+            el.innerText = currentStatus;
+            el.className = `badge ${currentStatus.toLowerCase()}`;
+            el.style.background = currentStatus === 'CONNECTED' ? '#10b981' : '#ef4444';
+        }
+
+        async function searchTherapists() {
+            const q = document.getElementById('search-query').value;
+            if (!q) return;
+            const list = document.getElementById('rec-list');
+            list.innerHTML = '<div class="system">Searching...</div>';
+            try {
+                const res = await fetch(`${API_URL}/api/recommendations/therapists?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                list.innerHTML = '';
+                data.forEach(t => {
+                    const el = document.createElement('div');
+                    el.className = 'therapist-item';
+                    el.innerHTML = `
+                        <div class="therapist-name">${t.name}</div>
+                        <div class="therapist-meta">${t.specializations} (Score: ${Math.round(t.score*100)}%)</div>
+                    `;
+                    el.onclick = () => connectToTherapist(t);
+                    list.appendChild(el);
+                });
+            } catch (err) { log('error', 'Search failed'); }
+        }
+
+        async function connectToTherapist(therapist) {
+            log('api', `Connecting to ${therapist.name}...`);
+            try {
+                const res = await fetch(`${API_URL}/api/connections/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        therapistId: therapist.therapistId,
+                        message: "Hi."
+                    })
+                });
+                if (res.ok) {
+                    addMessage('system', `Request sent. Please switch to Therapist view to approve.`);
+                    refreshConnections();
+                }
+            } catch (err) { log('error', 'Connect request failed'); }
+        }
+
+        async function refreshConnections() {
+            const role = document.getElementById('user-role').value;
+            const list = document.getElementById('conn-list');
+            try {
+                const res = await fetch(`${API_URL}/api/connections?role=${role}`);
+                const data = await res.json();
+                list.innerHTML = '';
+                if (data.length === 0) list.innerHTML = '<div class="system">No matches.</div>';
+                data.forEach(c => {
+                    const el = document.createElement('div');
+                    el.className = 'therapist-item';
+                    const isPending = c.status === 'pending';
+                    
+                    let displayName = role === 'patient' ? c.therapistName : c.patientName;
+                    if (role === 'patient' && displayName && !displayName.includes('Dr.')) {
+                        displayName = `Dr. ${displayName}`;
+                    } else if (role === 'therapist') {
+                        displayName = `Patient: ${displayName}`;
+                    }
+
+                    let meta = `Status: ${c.status}`;
+                    if (role === 'patient' && c.therapistRating) {
+                        meta += ` | ⭐ ${c.therapistRating} (${c.therapistReviewCount} reviews)`;
+                    } else if (role === 'therapist' && c.patientReason) {
+                        meta += ` | 📝 Reason: ${c.patientReason}`;
+                    }
+
+                    el.innerHTML = `
+                        <div class="therapist-name">${displayName}</div>
+                        <div class="therapist-meta">${meta}</div>
+                        <div style="display:flex; gap:5px; margin-top:5px; flex-wrap: wrap;">
+                            ${role === 'therapist' && isPending ? `<button onclick="approveConnection('${c.id}')" style="background:#10b981; border:none; color:white; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Approve</button>` : ''}
+                            ${!isPending ? `
+                                <button onclick="startChat('${c.id}', '${c.therapistName || c.patientName}')" style="background:#4f46e5; border:none; color:white; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Chat Now</button>
+                                <button onclick="startChat('${c.id}', '${c.therapistName || c.patientName}', true)" style="background:#6366f1; border:none; color:white; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">New Chat</button>
+                                ${role === 'patient' ? `<button onclick="showFeedbackForm('${c.id}')" style="background:#10b981; border:none; color:white; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Feedback</button>` : ''}
+                            ` : ''}
+                        </div>
+                    `;
+                    list.appendChild(el);
+                });
+            } catch (err) { }
+        }
+
+        async function startChat(connectionId, name, forceNew = false) {
+            log('api', `${forceNew ? 'Starting NEW' : 'Starting'} chat...`);
+            try {
+                const myRole = document.getElementById('user-role').value;
+                const res = await fetch(`${API_URL}/api/chat/sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ connectionId, role: myRole, forceNew })
+                });
+                const { sessionId } = await res.json();
+                currentSessionId = sessionId;
+                socket.emit('chat:join', { sessionId });
+                
+                document.getElementById('chat-messages').innerHTML = '';
+                addMessage('system', `Chat active with ${name}.`);
+
+                // Load History
+                const msgRes = await fetch(`${API_URL}/api/chat/sessions/${sessionId}/messages`);
+                const messages = await msgRes.json();
+                messages.forEach(m => {
+                    const msgRole = m.role === 'user' ? 'patient' : 'therapist';
+                    const isIncoming = (myRole === 'patient' && msgRole !== 'patient') || (myRole === 'therapist' && msgRole === 'patient');
+                    addMessage(isIncoming ? 'ai' : 'user', m.content);
+                });
+            } catch (err) { log('error', 'Chat session failed'); }
+        }
+
+        async function approveConnection(id) {
+            try {
+                const res = await fetch(`${API_URL}/api/connections/${id}/respond`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'accepted' })
+                });
+                if (res.ok) { log('success', 'Accepted!'); refreshConnections(); }
+            } catch (err) { }
+        }
+
+        function switchRole() {
+            currentSessionId = null;
+            initSocket();
+            refreshConnections();
+            log('system', `Switched to ${document.getElementById('user-role').value}`);
+        }
+
+        async function sendMessage() {
+            try {
+                const input = document.getElementById('user-input');
+                const content = input.value.trim();
+                if (!content) return;
+                
+                log('user', `Sending: ${content}`);
+
+                if (!socket || !socket.connected) {
+                    log('error', 'Socket disconnected. Retrying...');
+                    initSocket();
+                    return;
+                }
+
+                if (!currentSessionId) {
+                    log('info', 'Auto-initializing session...');
+                    const role = document.getElementById('user-role').value;
+                    const res = await fetch(`${API_URL}/api/chat/sessions`, { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role })
+                    });
+                    const data = await res.json();
+                    if (!data.sessionId) throw new Error("Server failed to return a sessionId. Check API logs.");
+                    currentSessionId = data.sessionId;
+                    socket.emit('chat:join', { sessionId: currentSessionId });
+                    log('success', `Session [${currentSessionId}] started automatically.`);
+
+                    // Load History for auto-init
+                    const msgRes = await fetch(`${API_URL}/api/chat/sessions/${currentSessionId}/messages`);
+                    const messages = await msgRes.json();
+                    document.getElementById('chat-messages').innerHTML = '';
+                    messages.forEach(m => {
+                        const msgRole = m.role === 'user' ? 'patient' : 'therapist';
+                        const isIncoming = (role === 'patient' && msgRole !== 'patient') || (role === 'therapist' && msgRole === 'patient');
+                        addMessage(isIncoming ? 'ai' : 'user', m.content);
+                    });
+                }
+
+                addMessage('user', content);
+                socket.emit('chat:message', { sessionId: currentSessionId, content });
+                input.value = '';
+            } catch (e) {
+                log('error', `Send failed: ${e.message}`);
+            }
+        }
+
+        let streamingBubble = null;
+        function updateStreamingMessage(token) {
+            const chat = document.getElementById('chat-messages');
+            if (!streamingBubble) {
+                const el = document.createElement('div');
+                el.className = 'msg ai';
+                chat.appendChild(el);
+                streamingBubble = el;
+            }
+            streamingBubble.innerText += token;
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function finalizeStreamingMessage(text) {
+            if (streamingBubble) {
+                streamingBubble.innerText = text;
+                streamingBubble = null;
+            }
+        }
+
+        function addMessage(type, text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.innerText = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div;
+        }
+
+        async function showFeedbackForm(connectionId) {
+            const rating = prompt("Rate your experience (1-5):", "5");
+            if (!rating) return;
+            const review = prompt("Write a brief review:");
+            if (!review) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/connections/${connectionId}/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating: parseInt(rating), review })
+                });
+                if (res.ok) {
+                    log('success', 'Thank you for your feedback!');
+                    refreshConnections();
+                } else {
+                    const err = await res.json();
+                    log('error', `Feedback failed: ${err.error}`);
+                }
+            } catch (err) { log('error', 'Feedback failed'); }
+        }
+
+        function log(type, msg) {
+            const consoleEl = document.getElementById('debug-console');
+            if (!consoleEl) return;
+            const time = new Date().toLocaleTimeString();
+            consoleEl.innerHTML = `[${time}] <span style="color:#818cf8">[${type.toUpperCase()}]</span> ${msg}<br>` + consoleEl.innerHTML;
+        }
+
+        // Initialize
+        window.onload = () => {
+            initSocket();
+            refreshConnections();
+            setInterval(refreshConnections, 5000); // Reactive presence & list
+            log('info', 'Ready.');
+        };
+    </script>
+</body>
+</html>

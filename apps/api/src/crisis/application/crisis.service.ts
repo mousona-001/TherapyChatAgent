@@ -1,8 +1,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { TwilioAdapter } from '../infrastructure/twilio.adapter';
-import { DB_TOKEN } from 'src/database/database.module';
-import { db } from 'src/database/db';
-import { patientProfile } from 'src/database/schema';
+import { DB_TOKEN } from '../../database/database.module';
+import { db } from '../../database/db';
+import { patientProfile } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import Redis from 'ioredis';
 

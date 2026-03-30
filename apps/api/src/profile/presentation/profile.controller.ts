@@ -6,7 +6,7 @@ import { CreateTherapistProfileDto, CreatePatientProfileDto } from '@repo/types'
 
 @ApiTags('Profile')
 @ApiBearerAuth()
-@Controller('api/profile')
+@Controller('profile')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
@@ -65,5 +65,13 @@ export class ProfileController {
     @Body() dto: Partial<CreatePatientProfileDto>,
   ) {
     return this.profileService.updatePatientProfile(session.user.id, dto);
+  }
+
+  // PATCH /api/profile/phone-verification/reset
+  @Patch('phone-verification/reset')
+  @ApiOperation({ summary: 'Reset the phone verification status' })
+  @ApiResponse({ status: 200, description: 'Phone verification status reset successfully.' })
+  resetPhoneVerification(@Session() session: UserSession) {
+    return this.profileService.resetPhoneVerification(session.user.id);
   }
 }

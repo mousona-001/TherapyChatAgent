@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sama – Professional Support, Augmented by AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/phosphor.min.js"></script>
+    <style>
+        :root {
+            --surface: #f9f9ff;
+            --surface-container-low: #f0f3ff;
+            --surface-container: #e7eeff;
+            --surface-container-lowest: #ffffff;
+            --primary: #494bd6;
+            --primary-dim: #3c3dca;
+            --primary-container: #dfe0ff;
+            --on-primary: #ffffff;
+            --on-surface: #003265;
+            --on-surface-variant: #3b6095;
+            --outline-variant: rgba(144, 179, 238, 0.15);
+            --shadow-sm: 0 4px 16px -4px rgba(0, 50, 101, 0.07);
+            --shadow-md: 0 10px 40px -10px rgba(0, 50, 101, 0.12);
+            --shadow-lg: 0 20px 60px -20px rgba(0, 50, 101, 0.16);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--surface);
+            color: var(--on-surface);
+            overflow-x: hidden;
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--surface-container-low);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-container);
+            border-radius: 10px;
+        }
+
+        /* ─── NAV ─── */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 3rem;
+            height: 64px;
+            background: rgba(249, 249, 255, 0.82);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--outline-variant);
+            transition: box-shadow 0.3s;
+        }
+
+        .nav.scrolled {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-logo-mark {
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-logo-mark i {
+            color: white;
+            font-size: 1rem;
+        }
+
+        .nav-logo-text {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--on-surface);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--on-surface-variant);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .btn-ghost {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--on-surface);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-container-low);
+        }
+
+        .btn-primary {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 6px;
+            padding: 0.55rem 1.25rem;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* ─── HERO ─── */
+        .hero {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            padding: 9rem 3rem 5rem;
+            gap: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(73, 75, 214, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-bg-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(73, 75, 214, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(73, 75, 214, 0.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 100% 80% at 50% 50%, black 30%, transparent 80%);
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-container);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.35rem 0.85rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: fadeUp 0.6s ease forwards 0.1s;
+        }
+
+        .hero-eyebrow i {
+            font-size: 0.85rem;
+        }
+
+        .hero-headline {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(2.75rem, 5vw, 4rem);
+            line-height: 1.1;
+            color: var(--on-surface);
+            margin-bottom: 1.25rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.7s ease forwards 0.2s;
+        }
+
+        .hero-headline em {
+            font-style: italic;
+            color: var(--primary);
+        }
+
+        .hero-sub {
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: var(--on-surface-variant);
+            max-width: 480px;
+            margin-bottom: 2.25rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.7s ease forwards 0.35s;
+        }
+
+        .hero-cta-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.7s ease forwards 0.5s;
+        }
+
+        .cta-large {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 24px -6px rgba(73, 75, 214, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px -6px rgba(73, 75, 214, 0.5);
+        }
+
+        .cta-large i {
+            font-size: 1rem;
+        }
+
+        .cta-outline {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--on-surface);
+            background: none;
+            border: 1.5px solid var(--surface-container);
+            border-radius: 8px;
+            padding: 0.85rem 1.5rem;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cta-outline:hover {
+            border-color: var(--primary);
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+
+        .hero-trust {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--on-surface-variant);
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards 0.65s;
+        }
+
+        .hero-trust i {
+            color: var(--primary);
+            font-size: 0.85rem;
+        }
+
+        .hero-trust strong {
+            color: var(--on-surface);
+            font-weight: 700;
+        }
+
+        /* Hero visual */
+        .hero-visual {
+            position: relative;
+            opacity: 0;
+            transform: translateX(24px);
+            animation: fadeLeft 0.8s ease forwards 0.4s;
+            padding: 1rem;
+        }
+
+        .hero-card-main {
+            background: var(--surface-container-lowest);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .hero-card-main img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 10px;
+            display: block;
+            background: var(--surface-container-low);
+        }
+
+        .hero-card-img-placeholder {
+            width: 100%;
+            height: 280px;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #e7eeff 0%, #dfe0ff 50%, #f0f3ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: var(--on-surface-variant);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card-img-placeholder::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 60% 40%, rgba(73, 75, 214, 0.08) 0%, transparent 50%);
+        }
+
+        .hero-card-img-placeholder i {
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+
+        .hero-float-card {
+            position: absolute;
+            background: var(--surface-container-lowest);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 3;
+        }
+
+        .hero-float-card.card-ai {
+            bottom: 1.25rem;
+            left: 1.25rem;
+            animation: floatY 4s ease-in-out infinite;
+        }
+
+        .hero-float-card.card-session {
+            top: 1.25rem;
+            right: 1.25rem;
+            animation: floatY 4s ease-in-out infinite 2s;
+        }
+
+        .float-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .float-icon.blue {
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+
+        .float-icon.green {
+            background: #dcf8e8;
+            color: #1a7a44;
+        }
+
+        .float-icon i {
+            font-size: 1rem;
+        }
+
+        .float-text .label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--on-surface-variant);
+        }
+
+        .float-text .value {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--on-surface);
+        }
+
+        /* ─── LOGOS / SOCIAL PROOF BAR ─── */
+        .logos-bar {
+            padding: 2.5rem 3rem;
+            border-top: 1px solid var(--outline-variant);
+            border-bottom: 1px solid var(--outline-variant);
+            background: var(--surface-container-lowest);
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            overflow: hidden;
+        }
+
+        .logos-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            opacity: 0.6;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .logos-track {
+            display: flex;
+            gap: 3rem;
+            align-items: center;
+            animation: marquee 24s linear infinite;
+            white-space: nowrap;
+        }
+
+        .logo-item {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--on-surface);
+            opacity: 0.25;
+            letter-spacing: -0.02em;
+        }
+
+        @keyframes marquee {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* ─── SECTION SHARED ─── */
+        section {
+            padding: 7rem 3rem;
+        }
+
+        .section-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .section-headline {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            line-height: 1.2;
+            color: var(--on-surface);
+            margin-bottom: 1rem;
+        }
+
+        .section-sub {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--on-surface-variant);
+            max-width: 520px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header .section-sub {
+            margin: 0 auto;
+        }
+
+        /* ─── HOW IT WORKS ─── */
+        .how-section {
+            background: var(--surface-container-lowest);
+            padding: 7rem 3rem 0;
+        }
+
+        .how-scroll-outer {
+            height: 400vh;
+            position: relative;
+        }
+
+        .how-scroll-inner {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-bottom: 7rem;
+        }
+
+        .how-scroll-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
+            align-items: start;
+            max-width: 1140px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .how-left {}
+
+        .how-right {}
+
+        .how-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .how-step {
+            display: flex;
+            gap: 1.25rem;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--outline-variant);
+            cursor: pointer;
+            transition: all 0.25s;
+            opacity: 0.45;
+        }
+
+        .how-step:last-child {
+            border-bottom: none;
+        }
+
+        .how-step.active {
+            opacity: 1;
+        }
+
+        .how-step-num {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            background: var(--surface-container-low);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--on-surface-variant);
+            transition: background 0.25s, color 0.25s, transform 0.25s;
+        }
+
+        .how-step.active .how-step-num {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.08);
+        }
+
+        .how-step-body h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            margin-bottom: 0.35rem;
+        }
+
+        .how-step-body p {
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: var(--on-surface-variant);
+        }
+
+        /* Right sticky visual */
+        .how-right {
+            position: sticky;
+            top: 100px;
+        }
+
+        .how-visual-sticky {
+            background: var(--surface-container-low);
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-md);
+            min-height: 420px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Panels */
+        .how-panel {
+            position: absolute;
+            inset: 1.75rem;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            pointer-events: none;
+        }
+
+        .how-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+            inset: auto;
+        }
+
+        .how-panel-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Matching panel */
+        .match-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .match-card {
+            background: var(--surface-container-lowest);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s;
+        }
+
+        .match-card.selected {
+            box-shadow: 0 0 0 2px var(--primary), var(--shadow-sm);
+        }
+
+        .match-av {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .match-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .match-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .match-tags {
+            display: flex;
+            gap: 0.3rem;
+            margin-top: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .match-tags span {
+            font-size: 0.62rem;
+            font-weight: 700;
+            background: var(--surface-container);
+            color: var(--on-surface-variant);
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+        }
+
+        .match-score {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* Session panel */
+        .session-card {
+            background: var(--surface-container-lowest);
+            border-radius: 10px;
+            padding: 1.1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .session-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .session-av {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            background: var(--primary-container);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        /* Escalation panel */
+        .escalation-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .esc-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.85rem 0;
+            position: relative;
+        }
+
+        .esc-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 28px;
+            bottom: -4px;
+            width: 2px;
+            background: var(--surface-container);
+        }
+
+        .esc-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 2px;
+            background: var(--surface-container);
+            border: 2px solid var(--surface-container);
+            transition: all 0.3s;
+        }
+
+        .esc-dot.done {
+            background: #1a7a44;
+            border-color: #1a7a44;
+        }
+
+        .esc-dot.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(73, 75, 214, 0.2);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 4px rgba(73, 75, 214, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(73, 75, 214, 0.08);
+            }
+        }
+
+        .esc-text strong {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--on-surface);
+        }
+
+        .esc-text span {
+            font-size: 0.72rem;
+            color: var(--on-surface-variant);
+        }
+
+        /* Chat mockup */
+        .chat-msg {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            align-items: flex-end;
+        }
+
+        .chat-msg.bot {
+            flex-direction: row;
+        }
+
+        .chat-msg.user {
+            flex-direction: row-reverse;
+        }
+
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .chat-avatar.bot-av {
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+
+        .chat-avatar.user-av {
+            background: var(--on-surface);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .chat-bubble {
+            max-width: 75%;
+            padding: 0.65rem 0.9rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+
+        .bot .chat-bubble {
+            background: var(--surface-container-lowest);
+            color: var(--on-surface);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user .chat-bubble {
+            background: var(--primary);
+            color: white;
+        }
+
+        .chat-typing {
+            display: flex;
+            gap: 4px;
+            padding: 0.65rem 0.9rem;
+            align-items: center;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--on-surface-variant);
+            opacity: 0.4;
+            animation: typingDot 1.2s ease-in-out infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingDot {
+
+            0%,
+            80%,
+            100% {
+                opacity: 0.4;
+            }
+
+            40% {
+                opacity: 1;
+            }
+        }
+
+        /* ─── FEATURES ─── */
+        .features-section {
+            background: var(--surface);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .feature-card {
+            background: var(--surface-container-lowest);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .feature-card:hover::after {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--surface-container-low);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            color: var(--on-surface-variant);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+
+        .feature-icon i {
+            font-size: 1.25rem;
+        }
+
+        .feature-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            font-size: 0.8rem;
+            line-height: 1.65;
+            color: var(--on-surface-variant);
+        }
+
+        /* Large feature card */
+        .feature-card.large {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .feature-card.dark {
+            background: var(--on-surface);
+            color: white;
+        }
+
+        .feature-card.dark h3 {
+            color: white;
+        }
+
+        .feature-card.dark p {
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .feature-card.dark .feature-icon {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .feature-card.dark:hover .feature-icon {
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+
+        /* Mini stat cards */
+        .stat-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .mini-stat {
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mini-stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.03em;
+        }
+
+        .mini-stat-label {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+
+        .mini-stat-delta {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        /* ─── TESTIMONIALS ─── */
+        .testimonials-section {
+            background: var(--surface-container-low);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .testi-card {
+            background: var(--surface-container-lowest);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .testi-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .testi-stars {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star {
+            width: 12px;
+            height: 12px;
+            background: #f59e0b;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+
+        .testi-text {
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: var(--on-surface);
+            font-style: italic;
+        }
+
+        .testi-text::before {
+            content: '"';
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.5rem;
+            line-height: 0;
+            vertical-align: -0.75rem;
+            color: var(--primary-container);
+            margin-right: 0.15rem;
+        }
+
+        .testi-author {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: auto;
+        }
+
+        .testi-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            background: var(--primary-container);
+        }
+
+        .testi-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--on-surface);
+        }
+
+        .testi-role {
+            font-size: 0.72rem;
+            color: var(--on-surface-variant);
+        }
+
+        .testi-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+
+        /* ─── HYBRID SECTION ─── */
+        .hybrid-section {
+            background: var(--on-surface);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hybrid-section::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(73, 75, 214, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hybrid-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hybrid-left .section-headline {
+            color: white;
+        }
+
+        .hybrid-left .section-sub {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .hybrid-left .section-eyebrow {
+            color: #a5b4fc;
+        }
+
+        .hybrid-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .hybrid-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.9rem;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .hybrid-pill i {
+            font-size: 0.85rem;
+            color: #a5b4fc;
+        }
+
+        .hybrid-cta {
+            margin-top: 2.5rem;
+        }
+
+        .cta-white {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            background: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem 1.75rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cta-white:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Comparison cards */
+        .comparison-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .comp-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: background 0.2s;
+        }
+
+        .comp-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .comp-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comp-icon.ai-ic {
+            background: rgba(73, 75, 214, 0.3);
+            color: #a5b4fc;
+        }
+
+        .comp-icon.human-ic {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .comp-icon i {
+            font-size: 1.1rem;
+        }
+
+        .comp-body h4 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.3rem;
+        }
+
+        .comp-body p {
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .comp-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.18rem 0.5rem;
+            border-radius: 4px;
+            margin-left: auto;
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 2px;
+        }
+
+        .comp-badge.always {
+            background: rgba(73, 75, 214, 0.3);
+            color: #a5b4fc;
+        }
+
+        .comp-badge.human {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        /* ─── CTA SECTION ─── */
+        .cta-section {
+            text-align: center;
+            padding: 8rem 3rem;
+            background: var(--surface-container-lowest);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-container), transparent);
+        }
+
+        .cta-section .section-headline {
+            margin-bottom: 1rem;
+        }
+
+        .cta-section .section-sub {
+            margin: 0 auto 2.5rem;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            background: var(--on-surface);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 4rem 3rem 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand .nav-logo {
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand .nav-logo-text {
+            color: white;
+        }
+
+        .footer-brand p {
+            font-size: 0.82rem;
+            line-height: 1.65;
+            color: rgba(255, 255, 255, 0.45);
+            max-width: 240px;
+        }
+
+        .footer-col h5 {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 1rem;
+        }
+
+        .footer-col a {
+            display: block;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.55);
+            text-decoration: none;
+            margin-bottom: 0.65rem;
+            transition: color 0.15s;
+        }
+
+        .footer-col a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-bottom p {
+            font-size: 0.75rem;
+        }
+
+        .footer-bottom-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-bottom-links a {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .footer-bottom-links a:hover {
+            color: white;
+        }
+
+        /* ─── STATS BAND ─── */
+        .stats-band {
+            background: var(--surface-container-lowest);
+            padding: 4rem 3rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            border-top: 1px solid var(--outline-variant);
+            border-bottom: 1px solid var(--outline-variant);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.75rem;
+            color: var(--on-surface);
+            letter-spacing: -0.02em;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-number span {
+            color: var(--primary);
+        }
+
+        .stat-desc {
+            font-size: 0.82rem;
+            color: var(--on-surface-variant);
+            line-height: 1.5;
+        }
+
+        /* ─── ANIMATIONS ─── */
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes floatY {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+
+        .reveal-delay-5 {
+            transition-delay: 0.5s;
+        }
+
+        .reveal-delay-6 {
+            transition-delay: 0.6s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── NAV ─── -->
+    <nav class="nav" id="mainNav">
+        <div class="nav-logo">
+            <div class="nav-logo-mark"><i class="ph ph-brain"></i></div>
+            <span class="nav-logo-text">Sama</span>
+        </div>
+        <div class="nav-links">
+            <a href="#">Therapists</a>
+            <a href="#">How it Works</a>
+            <a href="#">About AI</a>
+            <a href="#">Pricing</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-ghost">Log In</button>
+            <button class="btn-primary">Get Started</button>
+        </div>
+    </nav>
+
+    <!-- ─── HERO ─── -->
+    <section class="hero" id="hero">
+        <div class="hero-bg-grid"></div>
+        <div class="hero-content">
+            <div class="hero-eyebrow"><i class="ph ph-sparkle"></i> The Future of Mental Healthcare</div>
+            <h1 class="hero-headline">
+                Therapy that never<br>stops <em>showing up.</em>
+            </h1>
+            <p class="hero-sub">
+                Sama pairs you with a licensed therapist and an AI companion that supports you between
+                sessions — so care is continuous, not just once a week.
+            </p>
+            <div class="hero-cta-row">
+                <button class="cta-large">Find Your Therapist <i class="ph ph-arrow-right"></i></button>
+                <button class="cta-outline"><i class="ph ph-play-circle"></i> See How It Works</button>
+            </div>
+            <div class="hero-trust">
+                <i class="ph ph-shield-check"></i>
+                <span>HIPAA compliant &nbsp;·&nbsp; <strong>4,200+</strong> verified therapists &nbsp;·&nbsp; 24/7 AI
+                    support</span>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="hero-card-main">
+                <div class="hero-card-img-placeholder">
+                    <i class="ph ph-heartbeat"></i>
+                    <span style="font-size:0.85rem; font-weight:600; color: var(--on-surface-variant);">Your Digital
+                        Sanctuary</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 1rem;">
+                    <div>
+                        <div
+                            style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--on-surface-variant); margin-bottom:0.25rem;">
+                            Next Session</div>
+                        <div style="font-size:0.95rem; font-weight:700; color:var(--on-surface);">Dr. Sarah Chen · Today
+                            3PM</div>
+                    </div>
+                    <div
+                        style="width:36px;height:36px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                        <i class="ph ph-video-camera" style="color:white;font-size:1rem;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-float-card card-ai">
+                <div class="float-icon blue"><i class="ph ph-robot"></i></div>
+                <div class="float-text">
+                    <div class="label">AI Support</div>
+                    <div class="value">Available 24/7</div>
+                </div>
+            </div>
+
+            <div class="hero-float-card card-session">
+                <div class="float-icon green"><i class="ph ph-chart-line-up"></i></div>
+                <div class="float-text">
+                    <div class="label">Mood Trend</div>
+                    <div class="value">+18% this week</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── LOGOS ─── -->
+    <div class="logos-bar">
+        <span class="logos-label">Featured in</span>
+        <div style="display:flex; gap:3rem; overflow:hidden; flex:1;">
+            <div class="logos-track">
+                <span class="logo-item">TechCrunch</span>
+                <span class="logo-item">Forbes Health</span>
+                <span class="logo-item">The Lancet</span>
+                <span class="logo-item">JAMA Digital</span>
+                <span class="logo-item">Mental Health Today</span>
+                <span class="logo-item">Wired</span>
+                <span class="logo-item">TIME Health</span>
+                <span class="logo-item">TechCrunch</span>
+                <span class="logo-item">Forbes Health</span>
+                <span class="logo-item">The Lancet</span>
+                <span class="logo-item">JAMA Digital</span>
+                <span class="logo-item">Mental Health Today</span>
+                <span class="logo-item">Wired</span>
+                <span class="logo-item">TIME Health</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── STATS ─── -->
+    <div class="stats-band">
+        <div class="stat-item reveal">
+            <div class="stat-number">4,200<span>+</span></div>
+            <div class="stat-desc">Licensed therapists<br>across 50 states</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-1">
+            <div class="stat-number">92<span>%</span></div>
+            <div class="stat-desc">Patients report<br>measurable progress</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-2">
+            <div class="stat-number">3.4<span>×</span></div>
+            <div class="stat-desc">Better outcomes vs.<br>therapy alone</div>
+        </div>
+        <div class="stat-item reveal reveal-delay-3">
+            <div class="stat-number">24<span>/7</span></div>
+            <div class="stat-desc">AI companion<br>always available</div>
+        </div>
+    </div>
+
+    <!-- ─── HOW IT WORKS ─── -->
+    <section class="how-section" id="howSection">
+        <div style="max-width:1140px; margin:0 auto;">
+            <span class="section-eyebrow reveal" style="display:block; text-align:center;">Your care journey</span>
+            <h2 class="section-headline reveal reveal-delay-1" style="text-align:center; margin-bottom:0.75rem;">Human
+                expertise.<br>AI availability.</h2>
+            <p class="section-sub reveal reveal-delay-2" style="text-align:center; margin:0 auto 4rem;">Three seamlessly
+                connected layers ensure you're supported at every moment — from weekly sessions to 3am crises.</p>
+        </div>
+
+        <div class="how-scroll-outer">
+            <div class="how-scroll-inner">
+                <div class="how-scroll-grid">
+                    <!-- Left: sticky steps -->
+                    <div class="how-left">
+                        <div class="how-steps" id="howSteps">
+                            <div class="how-step active" data-step="0">
+                                <div class="how-step-num">01</div>
+                                <div class="how-step-body">
+                                    <h4>Get matched with your therapist</h4>
+                                    <p>Our clinical matching algorithm considers your history, preferences, and goals to
+                                        connect you with a licensed professional who truly fits.</p>
+                                </div>
+                            </div>
+                            <div class="how-step" data-step="1">
+                                <div class="how-step-num">02</div>
+                                <div class="how-step-body">
+                                    <h4>Attend structured sessions</h4>
+                                    <p>Video or in-person sessions follow evidence-based protocols — CBT, DBT, EMDR —
+                                        guided by your therapist's clinical expertise.</p>
+                                </div>
+                            </div>
+                            <div class="how-step" data-step="2">
+                                <div class="how-step-num">03</div>
+                                <div class="how-step-body">
+                                    <h4>AI supports you between sessions</h4>
+                                    <p>Sanctuary Bot, trained on clinical best practices, checks in daily, logs your
+                                        mood, and surfaces insights for your next session.</p>
+                                </div>
+                            </div>
+                            <div class="how-step" data-step="3">
+                                <div class="how-step-num">04</div>
+                                <div class="how-step-body">
+                                    <h4>Emergency escalation when it matters</h4>
+                                    <p>Distress signals are detected and automatically routed to human support — your
+                                        therapist, emergency contact, or crisis line.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: sticky visual panel -->
+                    <div class="how-right">
+                        <div class="how-visual-sticky" id="howVisual">
+
+                            <!-- Panel 0: Matching -->
+                            <div class="how-panel active" id="panel-0">
+                                <div class="how-panel-label"><i class="ph ph-magnifying-glass"
+                                        style="color:var(--primary);font-size:0.85rem;"></i> Smart Matching</div>
+                                <div class="match-cards">
+                                    <div class="match-card selected">
+                                        <div class="match-av"
+                                            style="background:var(--primary-container); color:var(--primary);">SC</div>
+                                        <div class="match-info">
+                                            <div class="match-name">Dr. Sarah Chen, LCSW</div>
+                                            <div class="match-tags">
+                                                <span>CBT</span><span>Trauma</span><span>Anxiety</span>
+                                            </div>
+                                        </div>
+                                        <div class="match-score">98%</div>
+                                    </div>
+                                    <div class="match-card">
+                                        <div class="match-av" style="background:#dcfce7; color:#166534;">RM</div>
+                                        <div class="match-info">
+                                            <div class="match-name">Dr. Ravi Menon, PsyD</div>
+                                            <div class="match-tags"><span>DBT</span><span>Addiction</span></div>
+                                        </div>
+                                        <div class="match-score">91%</div>
+                                    </div>
+                                    <div class="match-card">
+                                        <div class="match-av" style="background:#fef3c7; color:#92400e;">LK</div>
+                                        <div class="match-info">
+                                            <div class="match-name">Dr. Lisa Kim, MFT</div>
+                                            <div class="match-tags"><span>EMDR</span><span>Grief</span></div>
+                                        </div>
+                                        <div class="match-score">87%</div>
+                                    </div>
+                                </div>
+                                <div
+                                    style="margin-top:1.25rem; font-size:0.75rem; color:var(--on-surface-variant); display:flex; align-items:center; gap:0.4rem;">
+                                    <i class="ph ph-check-circle" style="color:var(--primary);"></i>
+                                    Matched based on your goals, language, and availability
+                                </div>
+                            </div>
+
+                            <!-- Panel 1: Session -->
+                            <div class="how-panel" id="panel-1">
+                                <div class="how-panel-label"><i class="ph ph-video-camera"
+                                        style="color:var(--primary);font-size:0.85rem;"></i> Live Session</div>
+                                <div class="session-card">
+                                    <div class="session-header">
+                                        <div class="session-av">SC</div>
+                                        <div>
+                                            <div style="font-size:0.88rem; font-weight:700; color:var(--on-surface);">
+                                                Dr. Sarah Chen</div>
+                                            <div
+                                                style="font-size:0.72rem; color:#1a7a44; font-weight:600; display:flex; align-items:center; gap:0.3rem;">
+                                                <span
+                                                    style="width:6px;height:6px;border-radius:50%;background:#1a7a44;display:inline-block;"></span>
+                                                Live · 24 min
+                                            </div>
+                                        </div>
+                                        <div style="margin-left:auto; display:flex; gap:0.5rem;">
+                                            <div
+                                                style="width:32px;height:32px;border-radius:6px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;color:var(--primary);">
+                                                <i class="ph ph-microphone" style="font-size:0.9rem;"></i>
+                                            </div>
+                                            <div
+                                                style="width:32px;height:32px;border-radius:6px;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626;">
+                                                <i class="ph ph-phone-slash" style="font-size:0.9rem;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="background:var(--surface-container-low);border-radius:8px;padding:1rem;margin-top:1rem;">
+                                        <div
+                                            style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--on-surface-variant);margin-bottom:0.5rem;">
+                                            Session notes — live</div>
+                                        <div style="font-size:0.8rem;line-height:1.6;color:var(--on-surface);">Patient
+                                            reports elevated anxiety around work. Identifying cognitive distortions —
+                                            <span style="color:var(--primary);font-weight:600;">all-or-nothing
+                                                thinking</span> present. Applying ABC model...
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;">
+                                        <div
+                                            style="font-size:0.7rem;font-weight:600;color:var(--on-surface-variant);background:var(--surface-container);padding:0.3rem 0.7rem;border-radius:20px;">
+                                            CBT Framework</div>
+                                        <div
+                                            style="font-size:0.7rem;font-weight:600;color:var(--on-surface-variant);background:var(--surface-container);padding:0.3rem 0.7rem;border-radius:20px;">
+                                            Thought record</div>
+                                        <div
+                                            style="font-size:0.7rem;font-weight:600;color:var(--primary);background:var(--primary-container);padding:0.3rem 0.7rem;border-radius:20px;">
+                                            Active</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Panel 2: AI Bot -->
+                            <div class="how-panel" id="panel-2">
+                                <div class="how-panel-label"><i class="ph ph-robot"
+                                        style="color:var(--primary);font-size:0.85rem;"></i> Sanctuary Bot</div>
+                                <div class="chat-msg bot">
+                                    <div class="chat-avatar bot-av"><i class="ph ph-robot"></i></div>
+                                    <div class="chat-bubble">Good morning! Your session with Dr. Chen is tomorrow at
+                                        3PM. How are you feeling today?</div>
+                                </div>
+                                <div class="chat-msg user">
+                                    <div class="chat-avatar user-av">JR</div>
+                                    <div class="chat-bubble">Anxious about a presentation. Can't stop thinking about it.
+                                    </div>
+                                </div>
+                                <div class="chat-msg bot">
+                                    <div class="chat-avatar bot-av"><i class="ph ph-robot"></i></div>
+                                    <div class="chat-bubble">I hear you. Let's try a quick grounding exercise — it
+                                        helped last Tuesday. Ready when you are.</div>
+                                </div>
+                                <div class="chat-msg bot">
+                                    <div class="chat-avatar bot-av"><i class="ph ph-robot"></i></div>
+                                    <div
+                                        style="background:var(--surface-container-lowest);border-radius:10px;padding:0.65rem 0.9rem;max-width:75%;box-shadow:var(--shadow-sm);">
+                                        <div class="chat-typing">
+                                            <div class="dot"></div>
+                                            <div class="dot"></div>
+                                            <div class="dot"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                    <div
+                                        style="font-size:0.72rem;font-weight:600;color:var(--primary);background:var(--primary-container);padding:0.3rem 0.7rem;border-radius:20px;cursor:pointer;">
+                                        Try breathing exercise</div>
+                                    <div
+                                        style="font-size:0.72rem;font-weight:600;color:var(--on-surface-variant);background:var(--surface-container);padding:0.3rem 0.7rem;border-radius:20px;cursor:pointer;">
+                                        Log my mood</div>
+                                    <div
+                                        style="font-size:0.72rem;font-weight:600;color:var(--on-surface-variant);background:var(--surface-container);padding:0.3rem 0.7rem;border-radius:20px;cursor:pointer;">
+                                        Talk to therapist</div>
+                                </div>
+                            </div>
+
+                            <!-- Panel 3: Emergency -->
+                            <div class="how-panel" id="panel-3">
+                                <div class="how-panel-label" style="color:#dc2626;"><i class="ph ph-warning"
+                                        style="color:#dc2626;font-size:0.85rem;"></i> Crisis Protocol</div>
+                                <div
+                                    style="background:#fef2f2;border-radius:10px;padding:1rem;margin-bottom:1rem;border-left:3px solid #dc2626;">
+                                    <div
+                                        style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#dc2626;margin-bottom:0.4rem;">
+                                        Distress signal detected</div>
+                                    <div style="font-size:0.82rem;color:#7f1d1d;line-height:1.55;">High-risk language
+                                        pattern identified in last message. Escalating to Dr. Sarah Chen.</div>
+                                </div>
+                                <div class="escalation-steps">
+                                    <div class="esc-step done">
+                                        <div class="esc-dot done"></div>
+                                        <div class="esc-text"><strong>AI flagged distress signal</strong><span>2 seconds
+                                                ago</span></div>
+                                    </div>
+                                    <div class="esc-step done">
+                                        <div class="esc-dot done"></div>
+                                        <div class="esc-text"><strong>Therapist notified</strong><span>Dr. Sarah Chen ·
+                                                8 seconds ago</span></div>
+                                    </div>
+                                    <div class="esc-step active">
+                                        <div class="esc-dot active"></div>
+                                        <div class="esc-text"><strong>Awaiting therapist response</strong><span>Est. 3
+                                                min</span></div>
+                                    </div>
+                                    <div class="esc-step">
+                                        <div class="esc-dot"></div>
+                                        <div class="esc-text"><strong>Emergency contact fallback</strong><span>If no
+                                                response in 10 min</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end how-scroll-grid -->
+        </div><!-- end how-scroll-inner -->
+        </div><!-- end how-scroll-outer -->
+    </section>
+    <section class="features-section">
+        <div style="max-width:1140px; margin:0 auto;">
+            <div class="section-header">
+                <span class="section-eyebrow reveal">Platform capabilities</span>
+                <h2 class="section-headline reveal reveal-delay-1">Built for the full<br>spectrum of care.</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card large dark reveal">
+                    <div>
+                        <div class="feature-icon"><i class="ph ph-brain"></i></div>
+                        <h3>AI trained on clinical best practices</h3>
+                        <p>Sanctuary Bot isn't a generic chatbot. It's trained on CBT, DBT, and trauma-informed
+                            frameworks — and tuned to your therapist's specific communication style.</p>
+                        <div class="mini-stat-label"
+                            style="color:rgba(255,255,255,0.5); font-size:0.72rem; margin-top:1rem;">Model accuracy on
+                            clinical benchmarks</div>
+                    </div>
+                    <div class="stat-stack">
+                        <div class="mini-stat">
+                            <div>
+                                <div class="mini-stat-val">94.2%</div>
+                                <div class="mini-stat-label">Safety compliance rate</div>
+                            </div>
+                            <div class="mini-stat-delta">↑ 4.1%</div>
+                        </div>
+                        <div class="mini-stat">
+                            <div>
+                                <div class="mini-stat-val">87ms</div>
+                                <div class="mini-stat-label">Average response time</div>
+                            </div>
+                            <div class="mini-stat-delta">↓ 12ms</div>
+                        </div>
+                        <div class="mini-stat">
+                            <div>
+                                <div class="mini-stat-val">12K+</div>
+                                <div class="mini-stat-label">Clinical interventions logged</div>
+                            </div>
+                            <div class="mini-stat-delta">↑ 8%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card reveal reveal-delay-1">
+                    <div class="feature-icon"><i class="ph ph-shield-check"></i></div>
+                    <h3>HIPAA-Compliant & Encrypted</h3>
+                    <p>End-to-end encryption on every message, session note, and mood log. Your data never trains models
+                        without consent.</p>
+                </div>
+
+                <div class="feature-card reveal reveal-delay-1">
+                    <div class="feature-icon"><i class="ph ph-chart-line-up"></i></div>
+                    <h3>Progress Tracking</h3>
+                    <p>Mood trends, session summaries, and milestone reports help you and your therapist see what's
+                        actually working.</p>
+                </div>
+
+                <div class="feature-card reveal reveal-delay-2">
+                    <div class="feature-icon"><i class="ph ph-warning-circle"></i></div>
+                    <h3>Crisis Detection & Escalation</h3>
+                    <p>Real-time distress monitoring escalates automatically to human support — therapist, emergency
+                        contact, or crisis line.</p>
+                </div>
+
+                <div class="feature-card reveal reveal-delay-3">
+                    <div class="feature-icon"><i class="ph ph-calendar-blank"></i></div>
+                    <h3>Seamless Scheduling</h3>
+                    <p>Integrated calendaring syncs with your therapist's availability. Reschedule, prepay, and get
+                        reminders in one place.</p>
+                </div>
+
+                <div class="feature-card reveal reveal-delay-4">
+                    <div class="feature-icon"><i class="ph ph-translate"></i></div>
+                    <h3>Multilingual Support</h3>
+                    <p>Therapy in the language you think in. Our AI and therapist network support 14 languages — with
+                        more coming.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── HYBRID ─── -->
+    <section class="hybrid-section">
+        <div style="max-width:1140px; margin:0 auto;">
+            <div class="hybrid-grid">
+                <div class="hybrid-left">
+                    <span class="section-eyebrow reveal">The hybrid advantage</span>
+                    <h2 class="section-headline reveal reveal-delay-1">Not AI instead of therapists.<br>AI <em
+                            style="font-style:italic; color:#a5b4fc;">alongside</em> them.</h2>
+                    <p class="section-sub reveal reveal-delay-2">The most effective care combines the irreplaceable
+                        empathy of a licensed human therapist with the tireless availability of AI. We designed every
+                        feature around this truth.</p>
+                    <div class="hybrid-pills reveal reveal-delay-3">
+                        <div class="hybrid-pill"><i class="ph ph-users"></i> 4,200+ verified therapists</div>
+                        <div class="hybrid-pill"><i class="ph ph-clock"></i> 24/7 AI availability</div>
+                        <div class="hybrid-pill"><i class="ph ph-handshake"></i> Coordinated care</div>
+                        <div class="hybrid-pill"><i class="ph ph-lock-key"></i> HIPAA compliant</div>
+                        <div class="hybrid-pill"><i class="ph ph-certificate"></i> Evidence-based protocols</div>
+                    </div>
+                    <div class="hybrid-cta reveal reveal-delay-4">
+                        <button class="cta-white">Start Your Journey <i class="ph ph-arrow-right"></i></button>
+                    </div>
+                </div>
+                <div class="comparison-cards reveal reveal-delay-2">
+                    <div class="comp-card">
+                        <div class="comp-icon ai-ic"><i class="ph ph-robot"></i></div>
+                        <div class="comp-body">
+                            <h4>AI Companion — Sanctuary Bot</h4>
+                            <p>Daily check-ins, mood logging, grounding exercises, session prep, and crisis monitoring —
+                                available the moment you need it.</p>
+                        </div>
+                        <div class="comp-badge always">Always on</div>
+                    </div>
+                    <div class="comp-card">
+                        <div class="comp-icon human-ic"><i class="ph ph-user-circle"></i></div>
+                        <div class="comp-body">
+                            <h4>Licensed Therapist</h4>
+                            <p>Structured sessions using CBT, DBT, EMDR, and trauma-informed care. A real human who
+                                knows your history and sees your full picture.</p>
+                        </div>
+                        <div class="comp-badge human">Human led</div>
+                    </div>
+                    <div class="comp-card">
+                        <div class="comp-icon" style="background:rgba(249,115,22,0.2); color:#fb923c;"><i
+                                class="ph ph-arrows-merge"></i></div>
+                        <div class="comp-body">
+                            <h4>Coordinated Intelligence</h4>
+                            <p>AI insights feed directly into your therapist's session prep. Your therapist shapes how
+                                the AI responds. A closed loop of care.</p>
+                        </div>
+                        <div class="comp-badge" style="background:rgba(249,115,22,0.2); color:#fb923c;">Integrated</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── TESTIMONIALS ─── -->
+    <section class="testimonials-section">
+        <div style="max-width:1140px; margin:0 auto;">
+            <div class="section-header">
+                <span class="section-eyebrow reveal">Patient stories</span>
+                <h2 class="section-headline reveal reveal-delay-1">Real people,<br>real progress.</h2>
+                <p class="section-sub reveal reveal-delay-2">Over 12,000 patients have found their balance through
+                    Sama's hybrid care model.</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testi-card reveal">
+                    <div class="testi-tag"><i class="ph ph-star" style="font-size:0.7rem;"></i> Patient</div>
+                    <div class="testi-stars">
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                    </div>
+                    <p class="testi-text">Having Sanctuary Bot between sessions changed everything. My therapist and I
+                        cover so much more ground because she already knows how my week went. It feels like continuous
+                        care, not just one hour a week.</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar">MA</div>
+                        <div>
+                            <div class="testi-name">Maya A.</div>
+                            <div class="testi-role">Patient · Anxiety & Depression</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testi-card reveal reveal-delay-1">
+                    <div class="testi-tag"><i class="ph ph-user-circle" style="font-size:0.7rem;"></i> Therapist</div>
+                    <div class="testi-stars">
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                    </div>
+                    <p class="testi-text">As a therapist, the AI-generated session summaries and mood data have
+                        genuinely elevated my clinical work. I walk into every session with a full picture. My patients
+                        notice the difference.</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: #dcf8e8; color: #1a7a44;">SC</div>
+                        <div>
+                            <div class="testi-name">Dr. Sarah Chen, LCSW</div>
+                            <div class="testi-role">Therapist · Trauma & CBT</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testi-card reveal reveal-delay-2">
+                    <div class="testi-tag"><i class="ph ph-star" style="font-size:0.7rem;"></i> Patient</div>
+                    <div class="testi-stars">
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                    </div>
+                    <p class="testi-text">I tried three different therapy apps before this. None of them felt real.
+                        Sama actually matched me with someone who gets me — and the AI doesn't try to
+                        replace her. It just supports the work.</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: #fce7f3; color: #9d174d;">JR</div>
+                        <div>
+                            <div class="testi-name">James R.</div>
+                            <div class="testi-role">Patient · PTSD & Grief</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testi-card reveal reveal-delay-1">
+                    <div class="testi-tag"><i class="ph ph-star" style="font-size:0.7rem;"></i> Patient</div>
+                    <div class="testi-stars">
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                    </div>
+                    <p class="testi-text">The 3AM check-in feature has genuinely saved me on difficult nights. Knowing I
+                        have support at any hour made me finally commit to therapy. Six months later, I'm in the best
+                        place of my life.</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: #ede9fe; color: #6d28d9;">LP</div>
+                        <div>
+                            <div class="testi-name">Lena P.</div>
+                            <div class="testi-role">Patient · OCD & Panic Disorder</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testi-card reveal reveal-delay-2">
+                    <div class="testi-tag"><i class="ph ph-user-circle" style="font-size:0.7rem;"></i> Therapist</div>
+                    <div class="testi-stars">
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                    </div>
+                    <p class="testi-text">I was skeptical about AI in clinical settings. But Sanctuary Bot is designed
+                        with real guardrails — it escalates when it should, doesn't overstep, and genuinely supports the
+                        therapeutic relationship.</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: #fef3c7; color: #92400e;">RM</div>
+                        <div>
+                            <div class="testi-name">Dr. Ravi Menon, PsyD</div>
+                            <div class="testi-role">Therapist · DBT & Addiction</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testi-card reveal reveal-delay-3">
+                    <div class="testi-tag"><i class="ph ph-star" style="font-size:0.7rem;"></i> Patient</div>
+                    <div class="testi-stars">
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                        <div class="star"></div>
+                    </div>
+                    <p class="testi-text">As someone who's been in traditional therapy for years, the continuity is
+                        remarkable. My therapist knows everything that happened between sessions — not because I spend
+                        20 minutes recapping, but because it's already there.</p>
+                    <div class="testi-author">
+                        <div class="testi-avatar" style="background: #dcfce7; color: #166534;">TK</div>
+                        <div>
+                            <div class="testi-name">Tomás K.</div>
+                            <div class="testi-role">Patient · Chronic Stress</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── CTA ─── -->
+    <section class="cta-section">
+        <div style="max-width:640px; margin:0 auto;">
+            <span class="section-eyebrow reveal">Begin today</span>
+            <h2 class="section-headline reveal reveal-delay-1">A calmer mind is<br>a few clicks away.</h2>
+            <p class="section-sub reveal reveal-delay-2">Join thousands who've discovered what happens when human
+                empathy and intelligent technology care for you together.</p>
+            <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.5rem;"
+                class="reveal reveal-delay-3">
+                <button class="cta-large">Start Your Journey <i class="ph ph-arrow-right"></i></button>
+                <button class="cta-outline"><i class="ph ph-users"></i> I'm a Therapist</button>
+            </div>
+            <p class="reveal reveal-delay-4" style="font-size:0.75rem; color:var(--on-surface-variant);">No commitment
+                required &nbsp;·&nbsp; Free 14-day trial &nbsp;·&nbsp; Cancel anytime</p>
+        </div>
+    </section>
+
+    <!-- ─── FOOTER ─── -->
+    <footer>
+        <div style="max-width:1140px; margin:0 auto;">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="nav-logo">
+                        <div class="nav-logo-mark"><i class="ph ph-brain"></i></div>
+                        <span class="nav-logo-text">Sama</span>
+                    </div>
+                    <p>Pioneering the digital sanctuary for mental health through intentional asymmetry and hybrid
+                        intelligence.</p>
+                </div>
+                <div class="footer-col">
+                    <h5>Platform</h5>
+                    <a href="#">Find a Therapist</a>
+                    <a href="#">How it Works</a>
+                    <a href="#">Pricing</a>
+                    <a href="#">About AI</a>
+                    <a href="#">For Therapists</a>
+                </div>
+                <div class="footer-col">
+                    <h5>Company</h5>
+                    <a href="#">About Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Contact</a>
+                    <a href="#">Press</a>
+                    <a href="#">Blog</a>
+                </div>
+                <div class="footer-col">
+                    <h5>Legal</h5>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">HIPAA Notice</a>
+                    <a href="#">Emergency Contacts</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 Sama. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Accessibility</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Nav scroll
+        const nav = document.getElementById('mainNav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 20);
+        });
+
+        // Scroll reveal
+        const revealEls = document.querySelectorAll('.reveal');
+        const revealObs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.12 });
+        revealEls.forEach(el => revealObs.observe(el));
+
+        // ── Scroll-driven How It Works ──
+        const howSection = document.getElementById('howSection');
+        const steps = document.querySelectorAll('.how-step');
+        const panels = document.querySelectorAll('.how-panel');
+        const STEP_COUNT = steps.length;
+
+        function activateStep(idx) {
+            steps.forEach((s, i) => s.classList.toggle('active', i === idx));
+            panels.forEach((p, i) => {
+                if (i === idx) {
+                    p.style.position = 'relative';
+                    p.style.inset = 'auto';
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                    p.style.position = 'absolute';
+                    p.style.inset = '1.75rem';
+                }
+            });
+        }
+
+        // Click also works
+        steps.forEach((step, i) => {
+            step.addEventListener('click', () => activateStep(i));
+        });
+
+        // Scroll-driven
+        window.addEventListener('scroll', () => {
+            if (!howSection) return;
+            const rect = howSection.getBoundingClientRect();
+            const sectionH = howSection.offsetHeight;
+            const scrollable = sectionH - window.innerHeight;
+            if (scrollable <= 0) return;
+            const scrolled = Math.max(0, -rect.top);
+            const progress = Math.min(1, scrolled / scrollable);
+            const idx = Math.min(STEP_COUNT - 1, Math.floor(progress * STEP_COUNT));
+            activateStep(idx);
+        }, { passive: true });
+    </script>
+</body>
+
+</html>

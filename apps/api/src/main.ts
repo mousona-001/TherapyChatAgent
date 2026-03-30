@@ -7,6 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'path';
+import { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   // bodyParser must be disabled for Better Auth to handle raw request bodies
@@ -18,11 +19,29 @@ async function bootstrap() {
   const audioDir = path.join(process.cwd(), 'public', 'audio');
   app.useStaticAssets(audioDir, { prefix: '/audio' });
 
-  // Enable CORS
-  app.enableCors();
+  // Aggressive CORS for Demo (Must be before other middleware)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+    } else {
+      next();
+    }
+  });
 
   // Enforce DTO validation constraints globally for security
   app.useGlobalPipes(new ValidationPipe());
+
+  // Set global prefix
+  app.setGlobalPrefix('api', { exclude: ['health', 'reference', 'audio'] });
 
   // Configure Swagger & Scalar API Docs
   const config = new DocumentBuilder()

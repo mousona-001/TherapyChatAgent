@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sama – Sign Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/phosphor.min.js"></script>
+    <style>
+        :root {
+            --surface: #f9f9ff;
+            --surface-bright: #f9f9ff;
+            --surface-dim: #e7eeff;
+            --surface-container-low: #f0f3ff;
+            --surface-container: #e7eeff;
+            --surface-container-lowest: #ffffff;
+            --primary: #6366F1;
+            --primary-container: #dfe0ff;
+            --on-primary: #ffffff;
+            --on-surface: #003265;
+            --on-surface-variant: #3b6095;
+            --outline-variant: rgba(144, 179, 238, 0.15);
+            --shadow: 0 10px 30px -10px rgba(0, 50, 101, 0.08);
+            --r-sm: 0.25rem;
+            --r-md: 0.5rem;
+            --r-lg: 0.625rem;
+            --r-pill: 0.375rem;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--surface);
+            color: var(--on-surface);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 56px;
+            background: rgba(249, 249, 255, 0.80);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--outline-variant);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-brand {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            letter-spacing: -0.01em;
+        }
+
+        .nav-help {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-sm);
+            background: var(--surface-container-low);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--on-surface-variant);
+            cursor: pointer;
+            border: none;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* ADD THIS */
+            padding: 3.5rem 1.5rem 3rem;
+            max-width: 560px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .card-headline {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--on-surface);
+            line-height: 1.15;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-container);
+            text-align: center;
+        }
+
+        .card-sub {
+            font-size: 0.82rem;
+            color: var(--on-surface-variant);
+            line-height: 1.55;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-container);
+            text-align: center;
+        }
+
+        .step-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            margin-bottom: 1.25rem;
+        }
+
+        .headline {
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--on-surface);
+            text-align: center;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+        }
+
+        .sub-copy {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--on-surface-variant);
+            text-align: center;
+            line-height: 1.65;
+            max-width: 440px;
+            margin-bottom: 3rem;
+        }
+
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            margin-bottom: 1.25rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .section-label i {
+            opacity: 0.55;
+            font-size: 1rem;
+        }
+
+        .form-card {
+            background: var(--surface-container-lowest);
+            border-radius: var(--r-md);
+            padding: 1.5rem;
+            width: 100%;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .field-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 0.7rem 0.85rem;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.9rem;
+            color: var(--on-surface);
+            background: var(--surface-container-low);
+            border: none;
+            border-radius: var(--r-sm);
+            border-bottom: 2px solid transparent;
+            outline: none;
+            transition: background 0.18s, border-color 0.18s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .field-input:focus {
+            background: var(--surface-container-lowest);
+            border-bottom-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .field-input::placeholder {
+            color: var(--on-surface-variant);
+            opacity: 0.55;
+        }
+
+        .field-input.has-icon {
+            padding-right: 2.5rem;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--on-surface-variant);
+            opacity: 0.5;
+            font-size: 1rem;
+            pointer-events: auto;
+            cursor: pointer;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+        }
+
+        /* ── OR separator ── */
+        .or-sep {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .or-sep-line {
+            flex: 1;
+            height: 1px;
+            background: var(--surface-container);
+        }
+
+        .or-sep-text {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            opacity: 0.65;
+        }
+
+        /* ── Google button ── */
+        .btn-google {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--surface-container-low);
+            border: none;
+            border-radius: var(--r-sm);
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s;
+        }
+
+        .btn-google:hover {
+            background: var(--surface-container);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-google svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ── Terms checkbox ── */
+        .terms-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0 0.15rem;
+        }
+
+        .custom-check {
+            width: 18px;
+            height: 18px;
+            border-radius: var(--r-sm);
+            background: var(--surface-container-low);
+            border: 2px solid var(--surface-container);
+            flex-shrink: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+            margin-top: 0.1rem;
+        }
+
+        .custom-check.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .custom-check i {
+            font-size: 0.7rem;
+            color: white;
+            display: none;
+        }
+
+        .custom-check.checked i {
+            display: block;
+        }
+
+        .terms-text {
+            font-size: 0.78rem;
+            color: var(--on-surface-variant);
+            line-height: 1.6;
+        }
+
+        .terms-text a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .terms-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Sign-in link row ── */
+        .signin-row {
+            font-size: 0.8rem;
+            color: var(--on-surface-variant);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .signin-row a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .signin-row a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── CTA button (inside form) ── */
+        .btn-next {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--on-primary);
+            background: var(--primary);
+            border: none;
+            border-radius: var(--r-sm);
+            padding: 0.75rem 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 16px -4px rgba(73, 75, 214, 0.35);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .btn-next i {
+            font-size: 1rem;
+        }
+
+        .btn-next:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-next:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <main>
+
+        <div class="form-card" style="margin-bottom: 1.5rem;">
+
+            <!-- Logo + Heading -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+                <img src="../common/brand-logo.svg" alt="Sama"
+                    style="width:56px; height:56px; border-radius:var(--r-sm);">
+            </div>
+
+            <!-- Heading inside card -->
+            <div style="width:100%;">
+                <p class="card-label">Create your account</p>
+                <h1 class="card-headline">Begin your journey<br>to better health.</h1>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Email address</label>
+                <div class="input-wrap">
+                    <input class="field-input has-icon" type="email" placeholder="you@example.com">
+                    <span class="input-icon"><i class="ph ph-envelope-simple"></i></span>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Password</label>
+                <div class="input-wrap">
+                    <input class="field-input has-icon" type="password" id="pw-signup"
+                        placeholder="Create a strong password">
+                    <button class="input-icon" onclick="togglePw('pw-signup', this)" type="button">
+                        <i class="ph ph-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="terms-row" onclick="toggleCheck(this)">
+                <div class="custom-check" id="terms-check">
+                    <i class="ph ph-check-bold"></i>
+                </div>
+                <span class="terms-text">
+                    I agree to Sama's
+                    <a href="#" onclick="event.stopPropagation()">Terms of Service</a>
+                    and
+                    <a href="#" onclick="event.stopPropagation()">Privacy Policy</a>.
+                </span>
+            </div>
+
+            <!-- CTA button -->
+            <button class="btn-next" style="width:100%; justify-content:center;">
+                Begin your journey
+                <i class="ph ph-arrow-right"></i>
+            </button>
+
+            <div class="or-sep">
+                <div class="or-sep-line"></div>
+                <span class="or-sep-text">or</span>
+                <div class="or-sep-line"></div>
+            </div>
+
+            <button class="btn-google" type="button">
+                <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4"
+                        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" />
+                    <path fill="#34A853"
+                        d="M9 18c2.43 0 4.467-.806 5.956-2.185l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" />
+                    <path fill="#FBBC05"
+                        d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332Z" />
+                    <path fill="#EA4335"
+                        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58Z" />
+                </svg>
+                Sign up with Google
+            </button>
+
+        </div>
+
+        <!-- Sign-in link -->
+        <p class="signin-row">Already have an account? <a href="signin.html">Sign in instead</a></p>
+
+    </main>
+
+    <script>
+        function togglePw(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'ph ph-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'ph ph-eye';
+            }
+        }
+
+        function toggleCheck(row) {
+            const check = row.querySelector('.custom-check');
+            check.classList.toggle('checked');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,14 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "ES2020"],
+    "paths": {
+      "@repo/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -2,12 +2,7 @@ import WebSocket from 'ws';
 import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 import Groq from 'groq-sdk';
 import { twilioToPcm16k } from './audio-pipeline';
-import {
-  setState,
-  appendHistory,
-  getHistory,
-  cleanupCall,
-} from './redis-session';
+import { appendHistory, getHistory, cleanupCall } from './redis-session';
 import { validateCrisisResponse } from './response-validator';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -16,11 +11,19 @@ const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? '';
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? '';
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY ?? '';
 
-if (!ELEVENLABS_API_KEY) console.error('[Config] ⚠️  ELEVENLABS_API_KEY is missing!');
-if (!ELEVENLABS_VOICE_ID) console.error('[Config] ⚠️  ELEVENLABS_VOICE_ID is missing!');
-if (!GROQ_API_KEY) console.error('[Config] ⚠️  GROQ_API_KEY is missing!');
-if (!DEEPGRAM_API_KEY) console.error('[Config] ⚠️  DEEPGRAM_API_KEY is missing!');
+if (!ELEVENLABS_API_KEY) console.error('[Config] ⚠️  ELEVENLABS_API_KEY missing!');
+if (!ELEVENLABS_VOICE_ID) console.error('[Config] ⚠️  ELEVENLABS_VOICE_ID missing!');
+if (!GROQ_API_KEY) console.error('[Config] ⚠️  GROQ_API_KEY missing!');
+if (!DEEPGRAM_API_KEY) console.error('[Config] ⚠️  DEEPGRAM_API_KEY missing!');
 
+// ─── VAD Threshold ────────────────────────────────────────────────────────────
+// PCM16 RMS value above which we consider the user to be speaking.
+// Silence ≈ 200, background noise ≈ 400–800, speech ≈ 1500+
+const VAD_SILENCE_THRESHOLD = 1200;
+// How many consecutive loud chunks before we trigger barge-in (avoids false positives)
+const VAD_FRAMES_TO_TRIGGER = 2;
+
+// ─── System Prompt ────────────────────────────────────────────────────────────
 const CRISIS_SYSTEM_PROMPT = `You are a trained crisis counsellor on a live phone call. You are warm, calm, and genuinely present. Your role is to provide immediate emotional support and de-escalation — not therapy, not diagnosis.
 
 THERAPEUTIC APPROACH:
@@ -57,12 +60,18 @@ export class StreamHandler {
   private streamSid = '';
   private twilioWs: WebSocket;
   private deepgramConn: ReturnType<typeof deepgram.listen.live> | null = null;
+
+  // In-memory state — avoids async Redis round-trips in the hot audio path
+  private isSpeaking = false;
   private ttsAbortController: AbortController | null = null;
   private silenceTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // VAD: track consecutive loud frames to avoid false barge-in on noise bursts
+  private vadLoudFrames = 0;
+
   constructor(ws: WebSocket) {
     this.twilioWs = ws;
-    console.log('[StreamHandler] New handler created — waiting for Twilio start event');
+    console.log('[StreamHandler] Handler created — waiting for Twilio start');
 
     ws.on('message', (data) => {
       this.onTwilioMessage(data.toString()).catch(e =>
@@ -72,71 +81,55 @@ export class StreamHandler {
 
     ws.on('close', (code, reason) => {
       console.log(`[StreamHandler] WebSocket closed: code=${code} reason=${reason.toString()}`);
-      this.onClose().catch(e => console.error('[StreamHandler] Error during cleanup:', e));
+      this.onClose().catch(e => console.error('[StreamHandler] Cleanup error:', e));
     });
 
-    ws.on('error', (err) => {
-      console.error('[StreamHandler] WebSocket error:', err);
-    });
+    ws.on('error', (err) => console.error('[StreamHandler] WebSocket error:', err));
   }
 
   // ─── Twilio Message Router ────────────────────────────────────────────────
   private async onTwilioMessage(raw: string): Promise<void> {
     let msg: Record<string, unknown>;
-    try {
-      msg = JSON.parse(raw);
-    } catch {
-      console.warn('[StreamHandler] Non-JSON message received — ignoring');
-      return;
-    }
+    try { msg = JSON.parse(raw); } catch { return; }
 
     const event = msg['event'] as string;
     if (event !== 'media') console.log(`[Twilio] Event: ${event}`);
 
     switch (event) {
       case 'connected':
-        console.log('[Twilio] ✅ Connected — waiting for start event...');
+        console.log('[Twilio] ✅ Connected');
         break;
 
       case 'start': {
         const start = msg['start'] as Record<string, unknown>;
         this.callSid = start['callSid'] as string;
         this.streamSid = start['streamSid'] as string;
-        console.log(`[Twilio] ✅ Stream started. callSid=${this.callSid} streamSid=${this.streamSid}`);
-        console.log(`[Twilio] Stream tracks: ${JSON.stringify(start['tracks'])}`);
+        console.log(`[Twilio] ✅ Stream started. callSid=${this.callSid}`);
         await this.initCall();
         break;
       }
 
       case 'media': {
         const media = msg['media'] as Record<string, unknown>;
-        await this.onAudioChunk(media['payload'] as string);
+        this.onAudioChunk(media['payload'] as string);
         break;
       }
 
       case 'dtmf':
-        console.log(`[Twilio] DTMF key pressed: ${JSON.stringify(msg['dtmf'])}`);
+        console.log(`[Twilio] DTMF: ${JSON.stringify(msg['dtmf'])}`);
         break;
 
       case 'stop':
-        console.log('[Twilio] Stop event received — ending call');
+        console.log('[Twilio] Stop event');
         await this.onClose();
         break;
-
-      default:
-        console.log(`[Twilio] Unknown event: ${event}`);
     }
   }
 
   // ─── Call Initialization ──────────────────────────────────────────────────
   private async initCall(): Promise<void> {
     console.log(`[StreamHandler] Initialising call: ${this.callSid}`);
-    await setState(this.callSid, 'LISTENING');
-
-    console.log('[Deepgram] Initialising live transcription...');
     this.initDeepgram();
-
-    console.log('[ElevenLabs] Sending greeting...');
     await this.speak("Hello, I'm here with you. Please take your time and tell me what's happening.");
   }
 
@@ -149,13 +142,15 @@ export class StreamHandler {
         encoding: 'linear16',
         sample_rate: 16000,
         interim_results: true,
-        endpointing: 300,
+        endpointing: 150,     // down from 300ms — faster sentence detection
+        utterance_end_ms: 1000,
+        no_delay: true,       // prioritise low latency over accuracy
         smart_format: true,
       });
 
-      this.deepgramConn.on(LiveTranscriptionEvents.Open, () => {
-        console.log('[Deepgram] ✅ Connection open — live transcription active');
-      });
+      this.deepgramConn.on(LiveTranscriptionEvents.Open, () =>
+        console.log('[Deepgram] ✅ Live transcription active')
+      );
 
       this.deepgramConn.on(LiveTranscriptionEvents.Transcript, async (data) => {
         const alt = data.channel?.alternatives?.[0];
@@ -167,164 +162,220 @@ export class StreamHandler {
 
         this.resetSilenceTimer();
 
-        if (this.ttsAbortController && !this.ttsAbortController.signal.aborted) {
-          console.log('[StreamHandler] 🛑 Barge-in detected — cancelling TTS');
-          await this.cancelTts();
-        }
-
         if (isFinal && text.length > 2) {
-          await this.onFinalTranscript(text);
+          await this.onFinalTranscript(text).catch(e =>
+            console.error('[STT→LLM] Error:', e)
+          );
         }
       });
 
-      this.deepgramConn.on(LiveTranscriptionEvents.Error, (err) => {
-        console.error('[Deepgram] ❌ Error:', err);
-      });
+      this.deepgramConn.on(LiveTranscriptionEvents.Error, (err) =>
+        console.error('[Deepgram] ❌ Error:', err)
+      );
 
-      this.deepgramConn.on(LiveTranscriptionEvents.Close, () => {
-        console.log('[Deepgram] Connection closed');
-      });
+      this.deepgramConn.on(LiveTranscriptionEvents.Close, () =>
+        console.log('[Deepgram] Connection closed')
+      );
 
     } catch (e) {
       console.error('[Deepgram] ❌ Failed to initialise:', e);
     }
   }
 
-  // ─── Audio Chunk Processing ───────────────────────────────────────────────
-  private async onAudioChunk(base64Payload: string): Promise<void> {
+  // ─── Audio Chunk: VAD + forward to Deepgram ───────────────────────────────
+  // NOTE: kept synchronous to avoid async overhead on every 20ms chunk
+  private onAudioChunk(base64Payload: string): void {
     if (!this.deepgramConn) return;
     try {
-      const pcm16k = twilioToPcm16k(base64Payload);
-      const ab = pcm16k.buffer.slice(pcm16k.byteOffset, pcm16k.byteOffset + pcm16k.byteLength) as ArrayBuffer;
+      const pcm8k = Buffer.from(base64Payload, 'base64');
+      // Fast in-place mulaw→PCM16 decode (no full pipeline needed for VAD)
+      // We import mulaw decode from alawmulaw
+      const { mulaw } = require('alawmulaw') as typeof import('alawmulaw');
+      const pcm16 = Buffer.from(mulaw.decode(pcm8k).buffer);
+
+      // ── VAD Barge-In ───────────────────────────────────────────────────────
+      if (this.isSpeaking) {
+        const rms = this.computeRms(pcm16);
+        if (rms > VAD_SILENCE_THRESHOLD) {
+          this.vadLoudFrames++;
+          if (this.vadLoudFrames >= VAD_FRAMES_TO_TRIGGER) {
+            console.log(`[VAD] 🛑 Barge-in (RMS=${rms.toFixed(0)}) — interrupting TTS immediately`);
+            this.vadLoudFrames = 0;
+            this.cancelTts(); // synchronous cancel — no await needed
+          }
+        } else {
+          this.vadLoudFrames = 0;
+        }
+      }
+
+      // ── Feed Deepgram ──────────────────────────────────────────────────────
+      // Upsample 8kHz → 16kHz by duplicating each sample
+      const pcm16k = this.upsample8to16(pcm16);
+      const ab = pcm16k.buffer.slice(
+        pcm16k.byteOffset,
+        pcm16k.byteOffset + pcm16k.byteLength
+      ) as ArrayBuffer;
       this.deepgramConn.send(ab);
+
     } catch (e) {
       console.error('[Audio] ❌ Pipeline error:', e);
     }
   }
 
+  // Inline upsample to avoid module boundary overhead on the hot path
+  private upsample8to16(pcm8k: Buffer): Buffer {
+    const samples = pcm8k.length / 2;
+    const out = Buffer.alloc(samples * 4);
+    for (let i = 0; i < samples; i++) {
+      const s = pcm8k.readInt16LE(i * 2);
+      out.writeInt16LE(s, i * 4);
+      out.writeInt16LE(s, i * 4 + 2);
+    }
+    return out;
+  }
+
+  // RMS amplitude of PCM16 buffer
+  private computeRms(pcm16: Buffer): number {
+    const samples = pcm16.length / 2;
+    if (samples === 0) return 0;
+    let sum = 0;
+    for (let i = 0; i < pcm16.length; i += 2) {
+      const s = pcm16.readInt16LE(i);
+      sum += s * s;
+    }
+    return Math.sqrt(sum / samples);
+  }
+
   // ─── Final Transcript → LLM → TTS ────────────────────────────────────────
   private async onFinalTranscript(text: string): Promise<void> {
     console.log(`[LLM] Processing: "${text}"`);
-    await setState(this.callSid, 'PROCESSING');
     await appendHistory(this.callSid, { role: 'patient', text });
 
-    try {
-      const history = await getHistory(this.callSid);
-      const messages = [
-        { role: 'system' as const, content: CRISIS_SYSTEM_PROMPT },
-        ...history.map(t => ({
-          role: t.role === 'patient' ? 'user' as const : 'assistant' as const,
-          content: t.text,
-        })),
-      ];
+    const history = await getHistory(this.callSid);
+    const messages = [
+      { role: 'system' as const, content: CRISIS_SYSTEM_PROMPT },
+      ...history.map(t => ({
+        role: t.role === 'patient' ? 'user' as const : 'assistant' as const,
+        content: t.text,
+      })),
+    ];
 
-      console.log(`[LLM] Calling Groq with ${messages.length} messages...`);
-      const stream = await getGroq().chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages,
-        stream: true,
-        max_tokens: 80,
-      });
+    console.log('[LLM] Calling Groq (streaming)...');
 
-      let fullText = '';
-      for await (const chunk of stream) {
-        fullText += chunk.choices[0]?.delta?.content ?? '';
+    // ── Sentence-level streaming: start TTS as soon as first sentence arrives ──
+    const stream = await getGroq().chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      stream: true,
+      max_tokens: 80,
+      temperature: 0.6,
+    });
+
+    let buffer = '';
+    let firstSentenceSent = false;
+
+    for await (const chunk of stream) {
+      const token = chunk.choices[0]?.delta?.content ?? '';
+      buffer += token;
+
+      // As soon as we have a complete first sentence, start TTS immediately
+      // without waiting for the full response
+      const sentenceEnd = buffer.search(/[.!?]\s/);
+      if (!firstSentenceSent && sentenceEnd !== -1) {
+        const firstSentence = buffer.slice(0, sentenceEnd + 1).trim();
+        buffer = buffer.slice(sentenceEnd + 2);
+        firstSentenceSent = true;
+
+        const safeSentence = await validateCrisisResponse(firstSentence);
+        console.log(`[LLM] First sentence: "${safeSentence}"`);
+        await appendHistory(this.callSid, { role: 'agent', text: safeSentence });
+
+        // Fire TTS for the first sentence without awaiting — let the second sentence collect
+        this.speak(safeSentence).catch(e => console.error('[TTS] Sentence 1 error:', e));
       }
-      console.log(`[LLM] ✅ Groq response: "${fullText}"`);
+    }
 
-      const safe = await validateCrisisResponse(fullText);
-      console.log(`[Safety] ✅ Validated: "${safe}"`);
-
-      await appendHistory(this.callSid, { role: 'agent', text: safe });
-      await this.speak(safe);
-
-    } catch (e) {
-      console.error('[LLM] ❌ Error processing transcript:', e);
-      await setState(this.callSid, 'LISTENING');
+    // Speak any remaining text (second sentence)
+    const remainder = buffer.trim();
+    if (remainder.length > 2) {
+      const safeRemainder = await validateCrisisResponse(remainder);
+      console.log(`[LLM] Remainder: "${safeRemainder}"`);
+      await appendHistory(this.callSid, { role: 'agent', text: safeRemainder });
+      await this.speak(safeRemainder);
     }
   }
 
   // ─── TTS via ElevenLabs → Twilio ─────────────────────────────────────────
   private async speak(text: string): Promise<void> {
-    console.log(`[TTS] Synthesising: "${text.slice(0, 60)}..."`);
-    await setState(this.callSid, 'SPEAKING');
+    console.log(`[TTS] → "${text.slice(0, 60)}"`);
+    this.isSpeaking = true;
     this.ttsAbortController = new AbortController();
     const signal = this.ttsAbortController.signal;
 
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream?output_format=ulaw_8000`;
-    console.log(`[TTS] Calling ElevenLabs: voiceId=${ELEVENLABS_VOICE_ID} model=eleven_flash_v2_5`);
-
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_flash_v2_5',
-          voice_settings: { stability: 0.8, similarity_boost: 0.75 },
-        }),
-        signal,
-      });
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream?output_format=ulaw_8000&optimize_streaming_latency=4`,
+        {
+          method: 'POST',
+          headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            model_id: 'eleven_flash_v2_5',
+            voice_settings: { stability: 0.75, similarity_boost: 0.75, speed: 1.0 },
+          }),
+          signal,
+        }
+      );
 
-      console.log(`[TTS] ElevenLabs response status: ${response.status}`);
+      console.log(`[TTS] ElevenLabs status: ${response.status}`);
 
       if (!response.ok) {
-        const errBody = await response.text();
-        console.error(`[TTS] ❌ ElevenLabs error ${response.status}: ${errBody}`);
-        await setState(this.callSid, 'LISTENING');
+        const err = await response.text();
+        console.error(`[TTS] ❌ ElevenLabs error ${response.status}: ${err}`);
         return;
       }
 
       if (!response.body) {
-        console.error('[TTS] ❌ ElevenLabs returned no body');
-        await setState(this.callSid, 'LISTENING');
+        console.error('[TTS] ❌ No body');
         return;
       }
 
-      console.log('[TTS] ✅ Streaming audio to Twilio...');
-      let chunkCount = 0;
+      let chunks = 0;
       const reader = response.body.getReader();
-
       while (true) {
         const { done, value } = await reader.read();
         if (done || signal.aborted) break;
-        chunkCount++;
         this.sendAudioToTwilio(Buffer.from(value));
+        chunks++;
       }
-
-      console.log(`[TTS] ✅ Finished streaming. Sent ${chunkCount} audio chunks.`);
+      console.log(`[TTS] ✅ Sent ${chunks} audio chunks`);
 
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== 'AbortError') {
-        console.error('[TTS] ❌ ElevenLabs stream error:', e.message);
+        console.error('[TTS] ❌ Error:', e.message);
       }
     } finally {
       if (!signal.aborted) {
-        await setState(this.callSid, 'LISTENING').catch(() => {});
+        this.isSpeaking = false;
       }
     }
   }
 
-  // ─── Barge-In ─────────────────────────────────────────────────────────────
-  private async cancelTts(): Promise<void> {
+  // ─── Barge-In: Cancel TTS immediately ────────────────────────────────────
+  private cancelTts(): void {
     this.ttsAbortController?.abort();
     this.ttsAbortController = null;
+    this.isSpeaking = false;
     if (this.twilioWs.readyState === WebSocket.OPEN) {
+      // Flush Twilio's audio buffer immediately
       this.twilioWs.send(JSON.stringify({ event: 'clear', streamSid: this.streamSid }));
-      console.log('[Twilio] Sent clear — buffer flushed');
     }
-    await setState(this.callSid, 'LISTENING');
+    console.log('[Barge-in] ✅ TTS cancelled and Twilio buffer cleared');
   }
 
   // ─── Send Audio to Twilio ─────────────────────────────────────────────────
   private sendAudioToTwilio(audioChunk: Buffer): void {
-    if (this.twilioWs.readyState !== WebSocket.OPEN) {
-      console.warn('[Twilio] WebSocket not open — dropping audio chunk');
-      return;
-    }
+    if (this.twilioWs.readyState !== WebSocket.OPEN) return;
     this.twilioWs.send(JSON.stringify({
       event: 'media',
       streamSid: this.streamSid,
@@ -336,20 +387,20 @@ export class StreamHandler {
   private resetSilenceTimer(): void {
     if (this.silenceTimer) clearTimeout(this.silenceTimer);
     this.silenceTimer = setTimeout(async () => {
-      console.log('[StreamHandler] 15s silence detected — sending prompt');
-      await this.speak("I'm still here. Take your time.").catch(e =>
-        console.error('[StreamHandler] Error speaking silence prompt:', e)
-      );
+      if (!this.isSpeaking) {
+        console.log('[StreamHandler] 15s silence — prompting');
+        await this.speak("I'm still here. Take your time.").catch(() => {});
+      }
     }, 15_000);
   }
 
   // ─── Cleanup ──────────────────────────────────────────────────────────────
   private async onClose(): Promise<void> {
-    console.log(`[StreamHandler] 🧹 Cleaning up call: ${this.callSid}`);
+    console.log(`[StreamHandler] 🧹 Cleaning up: ${this.callSid}`);
     if (this.silenceTimer) clearTimeout(this.silenceTimer);
-    this.ttsAbortController?.abort();
+    this.cancelTts();
     try { this.deepgramConn?.finish(); } catch {}
     if (this.callSid) await cleanupCall(this.callSid).catch(() => {});
-    console.log('[StreamHandler] ✅ Cleanup complete');
+    console.log('[StreamHandler] ✅ Done');
   }
 }

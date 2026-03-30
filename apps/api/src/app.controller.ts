@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 
 @ApiTags('System')
-@Controller('api/health')
+@Controller('health')
 export class HealthController {
   
   @Get()

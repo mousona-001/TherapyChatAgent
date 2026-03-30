@@ -30,4 +30,8 @@ export class ProfileService {
   updatePatientProfile(userId: string, data: Partial<PatientProfileData>) {
     return this.profilePort.updatePatientProfile(userId, data);
   }
+
+  resetPhoneVerification(userId: string) {
+    return this.profilePort.resetPhoneVerification(userId);
+  }
 }

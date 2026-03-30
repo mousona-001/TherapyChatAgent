@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { db } from '../../database/db';
-import { therapistProfile, patientProfile } from '../../database/schema';
+import { therapistProfile, patientProfile, user } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import { IProfilePort, TherapistProfileData, PatientProfileData } from '../domain/profile.port';
 import { randomUUID } from 'crypto';
@@ -13,10 +13,12 @@ export class DrizzleProfileAdapter implements IProfilePort {
       .values({
         id: randomUUID(),
         userId,
+        firstName: data.firstName,
+        lastName: data.lastName,
         phoneNumber: data.phoneNumber,
         bio: data.bio ?? null,
         avatarUrl: data.avatarUrl ?? null,
-        dateOfBirth: data.dateOfBirth ?? null,     // string | null — matches date column
+        dateOfBirth: data.dateOfBirth ?? null,
         gender: data.gender ?? null,
         licenseNumber: data.licenseNumber ?? null,
         licenseType: data.licenseType ?? null,
@@ -29,29 +31,21 @@ export class DrizzleProfileAdapter implements IProfilePort {
         updatedAt: new Date(),
       })
       .returning();
+
+    // ── UPDATE USER ROLE ───────────────────────────────────────────────────
+    await db.update(user).set({ role: 'therapist' }).where(eq(user.id, userId));
+
     return created;
   }
 
   async createPatientProfile(userId: string, data: PatientProfileData) {
-    // Validate assignedTherapistId exists before inserting (prevents FK constraint 500)
-    if (data.assignedTherapistId) {
-      const [therapist] = await db
-        .select({ id: therapistProfile.id })
-        .from(therapistProfile)
-        .where(eq(therapistProfile.id, data.assignedTherapistId));
-
-      if (!therapist) {
-        throw new BadRequestException(
-          `Therapist with id "${data.assignedTherapistId}" does not exist.`,
-        );
-      }
-    }
-
     const [created] = await db
       .insert(patientProfile)
       .values({
         id: randomUUID(),
         userId,
+        firstName: data.firstName,
+        lastName: data.lastName,
         phoneNumber: data.phoneNumber,
         bio: data.bio ?? null,
         avatarUrl: data.avatarUrl ?? null,
@@ -59,29 +53,48 @@ export class DrizzleProfileAdapter implements IProfilePort {
         gender: data.gender ?? null,
         emergencyContactName: data.emergencyContactName ?? null,
         emergencyContactPhone: data.emergencyContactPhone ?? null,
-        assignedTherapistId: data.assignedTherapistId ?? null,
         reasonForSeeking: data.reasonForSeeking ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
       .returning();
+
+    // ── UPDATE USER ROLE ───────────────────────────────────────────────────
+    await db.update(user).set({ role: 'patient' }).where(eq(user.id, userId));
+
     return created;
   }
 
   async getTherapistProfileByUserId(userId: string) {
-    const [profile] = await db
-      .select()
+    const [result] = await db
+      .select({
+        profile: therapistProfile,
+        user: {
+          phoneNumberVerified: user.phoneNumberVerified,
+        },
+      })
       .from(therapistProfile)
+      .innerJoin(user, eq(therapistProfile.userId, user.id))
       .where(eq(therapistProfile.userId, userId));
-    return profile ?? null;
+    
+    if (!result) return null;
+    return { ...result.profile, isPhoneVerified: result.user.phoneNumberVerified };
   }
 
   async getPatientProfileByUserId(userId: string) {
-    const [profile] = await db
-      .select()
+    const [result] = await db
+      .select({
+        profile: patientProfile,
+        user: {
+          phoneNumberVerified: user.phoneNumberVerified,
+        },
+      })
       .from(patientProfile)
+      .innerJoin(user, eq(patientProfile.userId, user.id))
       .where(eq(patientProfile.userId, userId));
-    return profile ?? null;
+
+    if (!result) return null;
+    return { ...result.profile, isPhoneVerified: result.user.phoneNumberVerified };
   }
 
   async updateTherapistProfile(userId: string, data: Partial<TherapistProfileData>) {
@@ -118,12 +131,18 @@ export class DrizzleProfileAdapter implements IProfilePort {
         ...(data.gender !== undefined && { gender: data.gender }),
         ...(data.emergencyContactName !== undefined && { emergencyContactName: data.emergencyContactName }),
         ...(data.emergencyContactPhone !== undefined && { emergencyContactPhone: data.emergencyContactPhone }),
-        ...(data.assignedTherapistId !== undefined && { assignedTherapistId: data.assignedTherapistId }),
         ...(data.reasonForSeeking !== undefined && { reasonForSeeking: data.reasonForSeeking }),
         updatedAt: new Date(),
       })
       .where(eq(patientProfile.userId, userId))
       .returning();
     return updated;
+  }
+  
+  async resetPhoneVerification(userId: string) {
+    await db
+      .update(user)
+      .set({ phoneNumberVerified: false })
+      .where(eq(user.id, userId));
   }
 }
