@@ -32,12 +32,10 @@
     --background: #f9f9ff;
     --foreground: #003265;
     
-    /* We'll use the darker blue derived from onboarding (494bd6) 
-       as it's specifically named primary in auth HTML too though some had 6366F1.
-       Actually, signup.html has --primary: #6366F1;
-       Let's use 494bd6 as user updated patient/step2 to 494bd6 */
-    --primary: #6366F1;
-    --primary-dim: #4f46e5;
+    /* Using the darker blue derived from onboarding (494bd6) 
+       to match the latest design system */
+    --primary: #494bd6;
+    --primary-dim: #3c3dca;
     --primary-foreground: #ffffff;
     
     --surface: #f9f9ff;

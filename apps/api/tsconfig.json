@@ -5,9 +5,17 @@
     "rootDir": "./src",
     "baseUrl": "./",
     "types": ["node"],
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    "node_modules/@repo/types/src",
+    "node_modules/@repo/types/node_modules",
+    "node_modules/@repo/typescript-config"
+  ]
 }
+
 
