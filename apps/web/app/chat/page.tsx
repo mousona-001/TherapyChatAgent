@@ -1,11 +1,11 @@
-"use client";
+"use client"
+import { Suspense, useEffect, useState } from "react";
+
 
 import { DashboardLayout } from "@/features/dashboard/components/DashboardLayout";
-import { useEffect, useState } from "react";
 import { getChatSessions, createChatSession } from "../onboarding/actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@repo/ui";
-import { Suspense } from "react";
 
 function ChatPageContent() {
   const router = useRouter();

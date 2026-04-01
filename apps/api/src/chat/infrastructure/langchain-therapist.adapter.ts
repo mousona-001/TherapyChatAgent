@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ChatGroq } from '@langchain/groq';
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
-import { tool } from '@langchain/core/tools';
+import { tool, StructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { ITherapistPort } from '../domain/therapist.port';
 import { CrisisService } from '../../crisis/application/crisis.service';
@@ -14,8 +14,8 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class LangchainTherapistAdapter implements ITherapistPort {
   private readonly model: ChatGroq;
-  private readonly escalateTool;
-  private readonly recommendTool;
+  private readonly escalateTool: StructuredTool;
+  private readonly recommendTool: StructuredTool;
 
   constructor(
     private readonly crisisService: CrisisService,
@@ -27,21 +27,27 @@ export class LangchainTherapistAdapter implements ITherapistPort {
       apiKey: process.env.GROQ_API_KEY,
     });
 
+    const escalateSchema = z.object({
+      reason: z.string().describe('A brief summary of why the human clinician needs to step in'),
+    });
+
     this.escalateTool = tool(
-      async ({ reason }) => {
+      async ({ reason }: z.infer<typeof escalateSchema>): Promise<string> => {
         return `Clinician notified with reason: ${reason}`;
       },
       {
         name: 'escalate_to_clinician',
         description: 'Call this tool ONLY when a user expresses intent for self-harm, suicide, or violence. This instantly alerts a human medical professional.',
-        schema: z.object({
-          reason: z.string().describe('A brief summary of why the human clinician needs to step in'),
-        }),
+        schema: escalateSchema,
       }
-    );
+    ) as unknown as StructuredTool;
+
+    const recommendSchema = z.object({
+      query: z.string().describe('The mental health concern to search for'),
+    });
 
     this.recommendTool = tool(
-      async ({ query }) => {
+      async ({ query }: z.infer<typeof recommendSchema>): Promise<string> => {
         const { RecommendationService } = await import('../../recommendation/application/recommendation.service');
         // This is a bit of a hack to get the service in a tool, but for demo it works.
         // In prod, use a proper tool registry.
@@ -50,11 +56,9 @@ export class LangchainTherapistAdapter implements ITherapistPort {
       {
         name: 'get_other_recommendations',
         description: 'Call this tool when the user is frustrated that their therapist is offline, or if they ask for someone else.',
-        schema: z.object({
-          query: z.string().describe('The mental health concern to search for'),
-        }),
+        schema: recommendSchema,
       }
-    );
+    ) as unknown as StructuredTool;
   }
 
   /** Build a dynamic system prompt — generic AI therapist OR persona of a specific therapist. */

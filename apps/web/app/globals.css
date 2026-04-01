@@ -1,5 +1,7 @@
 @import "@repo/ui/globals.css";
 
+@source "../../../packages/ui/src";
+
 @theme {
   --font-sans: var(--font-manrope), "Manrope", sans-serif;
   --font-serif: var(--font-dm-serif), "DM Serif Display", serif;

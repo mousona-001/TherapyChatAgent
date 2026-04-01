@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useRef, useState } from "react";
 
-import React, { useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import {
   MagnifyingGlass,

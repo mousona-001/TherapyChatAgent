@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useRef, useState } from "react";
 
-import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { User, DeviceMobile, CaretDown } from "@phosphor-icons/react";

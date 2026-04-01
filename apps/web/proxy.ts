@@ -37,7 +37,7 @@ export default async function proxy(request: NextRequest) {
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
-  const isProtectedRoute = pathname.startsWith("/app") || pathname.startsWith("/onboarding");
+  const isProtectedRoute = pathname.startsWith("/app") || pathname.startsWith("/onboarding") || pathname.startsWith("/dashboard");
 
   const sessionCookie = getSessionCookie(request);
 
@@ -64,14 +64,14 @@ export default async function proxy(request: NextRequest) {
     if (!role) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
-    const homePath = role === "patient" ? "/app/patient/home" : "/app/therapist/home";
+    const homePath = role === "patient" ? "/dashboard/find-therapist" : "/connections";
     return NextResponse.redirect(new URL(homePath, request.url));
   }
 
   // 6. Role protection — if session exists but no role, must go to onboarding
-  // We allow /recommendations, /connections, and /chat as they are the final stages where the role might not have synced yet
+  // We allow /dashboard, /connections, and /chat as they are the final stages where the role might not have synced yet
   const isPostOnboarding = 
-    pathname === "/recommendations" || 
+    pathname.startsWith("/dashboard") || 
     pathname === "/connections" || 
     pathname.startsWith("/chat");
 

@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import { ArrowRight, ArrowLeft } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui";

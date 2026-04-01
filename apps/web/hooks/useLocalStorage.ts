@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import { useState, useEffect } from "react";
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   // Pass initial state function to useState so logic is only executed once

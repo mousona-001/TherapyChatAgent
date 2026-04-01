@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChatDots,
@@ -17,8 +17,6 @@ import { OnboardingLayout } from "@/features/onboarding/components/OnboardingLay
 import { BottomBar } from "@/features/onboarding/components/BottomBar";
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useEffect } from "react";
-
 type CommunicationStyle = "Gentle" | "Direct" | "Analytical";
 type AITone = "Empathetic" | "Motivational" | "Clinical";
 

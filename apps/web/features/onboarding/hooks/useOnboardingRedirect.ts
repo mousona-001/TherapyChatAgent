@@ -1,6 +1,6 @@
-"use client";
-
+"use client"
 import { useEffect, useState } from "react";
+
 import { useRouter, usePathname } from "next/navigation";
 import { checkOnboardingStatus } from "../../../app/onboarding/actions";
 
@@ -15,7 +15,7 @@ export function useOnboardingRedirect() {
     async function check() {
       // Early exit if on recommendations, connections, or other "safe" paths
       const isPostOnboarding = 
-        pathname.startsWith("/recommendations") || 
+        pathname.startsWith("/dashboard") || 
         pathname.startsWith("/connections") || 
         pathname.startsWith("/chat");
         
@@ -36,21 +36,21 @@ export function useOnboardingRedirect() {
         if (status.complete) {
           const isTherapist = status.role === 'therapist';
           
-          // If a therapist is on recommendations, redirect them to connections
-          if (isTherapist && pathname === "/recommendations") {
+          // If a therapist is on the dashboard, redirect them to connections
+          if (isTherapist && pathname.startsWith("/dashboard")) {
             router.push("/connections");
             return;
           }
 
-          // If they are on recommendations/connections, allow it
-          if (pathname === "/recommendations" || pathname === "/connections") {
+          // If they are on dashboard/connections, allow it
+          if (pathname.startsWith("/dashboard") || pathname === "/connections") {
             setLoading(false);
             return;
           }
 
           // Redirect based on role when completing onboarding
           if (pathname.includes("/onboarding")) {
-            router.push(isTherapist ? "/connections" : "/recommendations");
+            router.push(isTherapist ? "/connections" : "/dashboard/find-therapist");
             return;
           }
           setLoading(false);
@@ -64,7 +64,7 @@ export function useOnboardingRedirect() {
         // Step Ranking for selective redirection (allow going back)
         const getRank = (p: string) => {
           if (p === "/chat") return 100;
-          if (p === "/recommendations") return 90;
+          if (p.startsWith("/dashboard")) return 90;
           if (p.includes("step-4")) return 4;
           if (p.includes("step-3")) return 3;
           if (p.includes("step-2")) return 2;

@@ -1,9 +1,10 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
+
 
 import { DashboardLayout } from "@/features/dashboard/components/DashboardLayout";
 import { ChatWindow } from "@/features/chat/components/ChatWindow";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import { getConnections, getChatSessions, checkOnboardingStatus } from "../../onboarding/actions";
 
 export default function ChatSessionPage() {

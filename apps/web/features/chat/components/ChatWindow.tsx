@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useRef, useState } from "react";
 
-import { useState, useEffect, useRef } from "react";
 import { Button } from "@repo/ui";
 import { PaperPlaneRight, User, Sparkle, CaretLeft } from "@phosphor-icons/react";
 import { cn } from "@repo/ui";

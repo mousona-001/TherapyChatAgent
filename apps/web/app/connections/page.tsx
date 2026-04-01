@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/features/dashboard/components/DashboardLayout";
 import { Button, Card } from "@repo/ui";
 import { Check, X, User, Clock, Users, ArrowRight } from "@phosphor-icons/react";

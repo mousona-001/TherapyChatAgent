@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   SquaresFour,
@@ -21,8 +21,6 @@ import { Textarea } from "@repo/ui";
 import { updatePatientProfile, getProfile } from "../../actions";
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useEffect } from "react";
-
 type Reason =
   | "anxious"
   | "low"

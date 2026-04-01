@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Heartbeat,
@@ -21,7 +21,6 @@ import { Input, Checkbox, PhoneInput, isValidPhoneNumber } from "@repo/ui";
 import { updatePatientProfile, getProfile } from "../../actions";
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useEffect } from "react";
 
 export default function PatientStep4() {
   const router = useRouter();
@@ -62,7 +61,9 @@ export default function PatientStep4() {
         emergencyContactPhone: ecPhone ? `+91${ecPhone.replace(/\D/g, "")}` : undefined,
       });
       if (result.error) throw new Error(result.error);
-      router.push("/recommendations");
+      // Artificial delay to show saving state and look premium
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      router.push("/dashboard/find-therapist");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save. Please try again.");
       setSaving(false);

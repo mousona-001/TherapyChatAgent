@@ -1,10 +1,11 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
+
 
 import { DashboardLayout } from "@/features/dashboard/components/DashboardLayout";
 import { Button } from "@repo/ui";
 import { useRouter } from "next/navigation";
 import { Star, ChatTeardropText, Sparkle, ChatCircleText } from "@phosphor-icons/react";
-import { useEffect, useState } from "react";
 import { getTherapistRecommendations, createConnection, createChatSession, getConnections } from "../onboarding/actions";
 
 interface Therapist {

@@ -1,10 +1,10 @@
-"use client";
+"use client"
+import { InputHTMLAttributes, useState } from "react";
 
-import React, { useState } from "react";
 import { Input, Label } from "@repo/ui";
 import { Eye, EyeClosed } from "@phosphor-icons/react";
 
-interface InputWrapperProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputWrapperProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   id: string;
   icon?: React.ReactNode;

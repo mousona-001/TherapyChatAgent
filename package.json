@@ -16,6 +16,7 @@
     "infra:down": "docker compose down"
   },
   "devDependencies": {
+    "ts-morph": "^27.0.2",
     "turbo": "^2.8.20",
     "typescript": "^5.0.0"
   },

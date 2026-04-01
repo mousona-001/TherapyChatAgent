@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Brain } from "@phosphor-icons/react";
 import { motion } from "framer-motion";

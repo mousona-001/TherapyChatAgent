@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { getChatToken } from "@/app/onboarding/actions";
 import { env } from "@/config/env";

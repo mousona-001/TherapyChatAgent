@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Certificate, Brain, Minus, Plus } from "@phosphor-icons/react";
 import { OnboardingLayout } from "@/features/onboarding/components/OnboardingLayout";
@@ -10,8 +10,6 @@ import { SpecializationSelect } from "@/features/onboarding/components/Specializ
 import { Input, Combobox, Button } from "@repo/ui";
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useEffect } from "react";
-
 const LICENSE_TYPES = [
   { value: "LCSW", label: "LCSW" },
   { value: "LPC", label: "LPC" },
