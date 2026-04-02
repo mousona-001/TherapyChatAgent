@@ -9,44 +9,55 @@ import { env } from "@/config/env";
  * presence:update events, returning a map of userId → "online" | "offline".
  */
 export function usePresence(watchIds: string[]) {
-  const [statusMap, setStatusMap] = useState<Record<string, "online" | "offline">>({});
-  const socketRef = useRef<Socket | null>(null);
-  const watchIdsRef = useRef(watchIds);
+	const [statusMap, setStatusMap] = useState<
+		Record<string, "online" | "offline">
+	>({});
+	const socketRef = useRef<Socket | null>(null);
+	const watchIdsRef = useRef(watchIds);
 
-  useEffect(() => {
-    watchIdsRef.current = watchIds;
-  });
+	useEffect(() => {
+		watchIdsRef.current = watchIds;
+	});
 
-  useEffect(() => {
-    let cancelled = false;
+	useEffect(() => {
+		let cancelled = false;
 
-    async function connect() {
-      const result = await getChatToken();
-      if (cancelled || !result.success || !result.data?.token) return;
+		async function connect() {
+			const result = await getChatToken();
+			if (cancelled || !result.success || !result.data?.token) return;
 
-      const socket = io(`${env.NEXT_PUBLIC_API_URL}/chat`, {
-        auth: { token: result.data.token },
-        transports: ["websocket"],
-        reconnectionAttempts: 5,
-      });
+			const socket = io(`${env.NEXT_PUBLIC_API_URL}/chat`, {
+				auth: { token: result.data.token },
+				transports: ["websocket"],
+				reconnectionAttempts: 5,
+			});
 
-      socket.on("presence:update", ({ userId, status }: { userId: string; status: "online" | "offline" }) => {
-        if (watchIdsRef.current.includes(userId)) {
-          setStatusMap((prev) => ({ ...prev, [userId]: status }));
-        }
-      });
+			socket.on(
+				"presence:update",
+				({
+					userId,
+					status,
+				}: {
+					userId: string;
+					status: "online" | "offline";
+				}) => {
+					if (watchIdsRef.current.includes(userId)) {
+						setStatusMap((prev) => ({ ...prev, [userId]: status }));
+					}
+				},
+			);
 
-      socketRef.current = socket;
-    }
+			socketRef.current = socket;
+		}
 
-    connect();
+		connect();
 
-    return () => {
-      cancelled = true;
-      socketRef.current?.disconnect();
-      socketRef.current = null;
-    };
-  }, []); // connect once on mount
+		return () => {
+			cancelled = true;
+			socketRef.current?.disconnect();
+			socketRef.current = null;
+		};
+	}, []); // connect once on mount
 
-  return statusMap;
+	return statusMap;
 }

@@ -6,20 +6,20 @@ import { AppSidebar } from "./AppSidebar";
 import { UnreadProvider } from "./UnreadContext";
 
 interface DashboardLayoutProps {
-        children: ReactNode;
+	children: ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-        return (
-                <UnreadProvider>
-                        <SidebarProvider>
-                                <AppSidebar />
-                                <div className="flex-1 flex flex-col h-screen overflow-hidden bg-surface relative">
-                                        <main className="flex-1 overflow-x-hidden overflow-y-auto">
-                                                {children}
-                                        </main>
-                                </div>
-                        </SidebarProvider>
-                </UnreadProvider>
-        );
+	return (
+		<UnreadProvider>
+			<SidebarProvider>
+				<AppSidebar />
+				<div className="flex-1 flex flex-col h-screen overflow-hidden bg-surface relative">
+					<main className="flex-1 overflow-x-hidden overflow-y-auto">
+						{children}
+					</main>
+				</div>
+			</SidebarProvider>
+		</UnreadProvider>
+	);
 }

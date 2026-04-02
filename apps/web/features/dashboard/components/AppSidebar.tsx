@@ -176,10 +176,7 @@ export function AppSidebar() {
 		>
 			{/* Header */}
 			<SidebarHeader className="h-14 flex-row items-center justify-between px-3 border-b border-outline-variant bg-[rgba(249,249,255,0.95)] overflow-visible relative">
-				<Link
-					href="/overview"
-					className="flex items-center gap-2.5 min-w-0"
-				>
+				<Link href="/overview" className="flex items-center gap-2.5 min-w-0">
 					<Image
 						src="/brand-logo.svg"
 						alt="Sama"
@@ -328,7 +325,9 @@ export function AppSidebar() {
 						<div ref={menuRef} className="relative w-full">
 							{/* Profile popup */}
 							{menuOpen && (
-							<div className={`absolute bottom-full left-0 mb-1 bg-white border border-outline-variant rounded-md shadow-[0_8px_24px_-6px_rgba(0,0,0,0.14)] overflow-hidden z-50 ${sidebarState === "expanded" ? "right-0" : "min-w-50"}`}>
+								<div
+									className={`absolute bottom-full left-0 mb-1 bg-white border border-outline-variant rounded-md shadow-[0_8px_24px_-6px_rgba(0,0,0,0.14)] overflow-hidden z-50 ${sidebarState === "expanded" ? "right-0" : "min-w-50"}`}
+								>
 									{/* Profile header */}
 									<div className="px-3 py-2.5 border-b border-outline-variant">
 										<p className="text-[0.78rem] font-bold text-on-surface truncate leading-tight">
@@ -361,8 +360,12 @@ export function AppSidebar() {
 							<SidebarMenuButton
 								tooltip={userName}
 								onClick={() => setMenuOpen((v) => !v)}
-							style={sidebarState === "expanded" ? { height: "auto", padding: "10px" } : {}}
-							className={`hover:bg-surface-container-low rounded-sm cursor-pointer ${sidebarState === "expanded" ? "border border-outline-variant hover:border-outline/50" : ""} group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:min-h-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:mx-auto`}
+								style={
+									sidebarState === "expanded"
+										? { height: "auto", padding: "10px" }
+										: {}
+								}
+								className={`hover:bg-surface-container-low rounded-sm cursor-pointer ${sidebarState === "expanded" ? "border border-outline-variant hover:border-outline/50" : ""} group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:min-h-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:mx-auto`}
 							>
 								<div
 									className="w-[30px] h-[30px] rounded-sm bg-primary text-white flex items-center justify-center text-[0.62rem] font-extrabold shrink-0 group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:text-[0.5rem]"

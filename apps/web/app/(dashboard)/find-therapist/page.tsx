@@ -144,49 +144,55 @@ export default function FindTherapistPage() {
 		setMounted(true);
 	}, []);
 
-	const fetchRecommendations = useCallback(async (queryOverride?: string, bustCache = false) => {
-		setLoading(true);
-		setError(null);
-		setIsDeepResults(false);
+	const fetchRecommendations = useCallback(
+		async (queryOverride?: string, bustCache = false) => {
+			setLoading(true);
+			setError(null);
+			setIsDeepResults(false);
 
-		// Serve from sessionStorage cache on repeat visits (unless forced refresh)
-		const cacheKey = "find-therapist:recommendations";
-		if (!bustCache && !queryOverride) {
-			try {
-				const cached = sessionStorage.getItem(cacheKey);
-				if (cached) {
-					const { data, ts } = JSON.parse(cached);
-					// Cache valid for 5 minutes
-					if (Date.now() - ts < 5 * 60 * 1000 && mountedRef.current) {
-						setTherapists(data);
-						setLoading(false);
-						return;
-					}
-				}
-			} catch {}
-		}
-
-		try {
-			const { data, error: apiError } = await getTherapistRecommendations(
-				queryOverride,
-				15,
-			);
-			if (!mountedRef.current) return;
-			if (apiError) throw new Error(apiError as string);
-			setTherapists(data || []);
-			if (!queryOverride) {
+			// Serve from sessionStorage cache on repeat visits (unless forced refresh)
+			const cacheKey = "find-therapist:recommendations";
+			if (!bustCache && !queryOverride) {
 				try {
-					sessionStorage.setItem(cacheKey, JSON.stringify({ data: data || [], ts: Date.now() }));
+					const cached = sessionStorage.getItem(cacheKey);
+					if (cached) {
+						const { data, ts } = JSON.parse(cached);
+						// Cache valid for 5 minutes
+						if (Date.now() - ts < 5 * 60 * 1000 && mountedRef.current) {
+							setTherapists(data);
+							setLoading(false);
+							return;
+						}
+					}
 				} catch {}
 			}
-		} catch (e) {
-			if (!mountedRef.current) return;
-			setError(e instanceof Error ? e.message : "Failed to load matches");
-			setTherapists([]);
-		} finally {
-			if (mountedRef.current) setLoading(false);
-		}
-	}, []);
+
+			try {
+				const { data, error: apiError } = await getTherapistRecommendations(
+					queryOverride,
+					15,
+				);
+				if (!mountedRef.current) return;
+				if (apiError) throw new Error(apiError as string);
+				setTherapists(data || []);
+				if (!queryOverride) {
+					try {
+						sessionStorage.setItem(
+							cacheKey,
+							JSON.stringify({ data: data || [], ts: Date.now() }),
+						);
+					} catch {}
+				}
+			} catch (e) {
+				if (!mountedRef.current) return;
+				setError(e instanceof Error ? e.message : "Failed to load matches");
+				setTherapists([]);
+			} finally {
+				if (mountedRef.current) setLoading(false);
+			}
+		},
+		[],
+	);
 
 	// Initial load — recommendations + connections
 	useEffect(() => {
@@ -212,7 +218,10 @@ export default function FindTherapistPage() {
 					if (result.success && result.data && mountedRef.current) {
 						setConnections(result.data as Connection[]);
 						try {
-							sessionStorage.setItem(connCacheKey, JSON.stringify({ data: result.data, ts: Date.now() }));
+							sessionStorage.setItem(
+								connCacheKey,
+								JSON.stringify({ data: result.data, ts: Date.now() }),
+							);
 						} catch {}
 					}
 				})
@@ -238,7 +247,11 @@ export default function FindTherapistPage() {
 		setSearchLoadingMore(false);
 		debounceRef.current = setTimeout(async () => {
 			try {
-				const { data, error: apiError } = await searchTherapists(q, 1, SEARCH_PAGE_SIZE);
+				const { data, error: apiError } = await searchTherapists(
+					q,
+					1,
+					SEARCH_PAGE_SIZE,
+				);
 				if (apiError) throw new Error(apiError as string);
 				setSearchResults((data as any)?.results || []);
 				setSearchTotal((data as any)?.total ?? 0);
@@ -261,9 +274,16 @@ export default function FindTherapistPage() {
 		const nextPage = searchPage + 1;
 		setSearchLoadingMore(true);
 		try {
-			const { data, error: apiError } = await searchTherapists(q, nextPage, SEARCH_PAGE_SIZE);
+			const { data, error: apiError } = await searchTherapists(
+				q,
+				nextPage,
+				SEARCH_PAGE_SIZE,
+			);
 			if (apiError) throw new Error(apiError as string);
-			setSearchResults((prev) => [...(prev ?? []), ...((data as any)?.results || [])]);
+			setSearchResults((prev) => [
+				...(prev ?? []),
+				...((data as any)?.results || []),
+			]);
 			setSearchTotal((data as any)?.total ?? searchTotal);
 			setSearchPage(nextPage);
 		} catch (e) {
@@ -404,7 +424,9 @@ export default function FindTherapistPage() {
 												<div className="flex items-start gap-3.5 pt-1.5">
 													<div className="w-13 h-13 rounded-md bg-primary-container flex items-center justify-center text-[0.95rem] font-extrabold text-primary tracking-[-0.01em] shrink-0 relative">
 														{connInitials}
-													{(conn.therapistId in presenceMap ? presenceMap[conn.therapistId] === "online" : conn.therapistStatus === "online") && (
+														{(conn.therapistId in presenceMap
+															? presenceMap[conn.therapistId] === "online"
+															: conn.therapistStatus === "online") && (
 															<span className="w-2.25 h-2.25 rounded-full bg-[#2dbe7a] border-2 border-white absolute -bottom-0.5 -right-0.5" />
 														)}
 													</div>
@@ -566,7 +588,10 @@ export default function FindTherapistPage() {
 												);
 												return searchResults.map((t) => {
 													const initials = getInitials(t.name);
-													const isOnline = t.therapistId in presenceMap ? presenceMap[t.therapistId] === "online" : t.status === "online";
+													const isOnline =
+														t.therapistId in presenceMap
+															? presenceMap[t.therapistId] === "online"
+															: t.status === "online";
 													const rating = parseFloat(t.rating ?? "5").toFixed(1);
 													const tags = getTags(t.specializations);
 													const bio =
@@ -617,8 +642,12 @@ export default function FindTherapistPage() {
 																		<span className="text-[0.58rem] font-extrabold uppercase tracking-widest text-primary">
 																			{roleLabel}
 																		</span>
-																		<span className={`inline-flex items-center gap-0.5 text-[0.58rem] font-bold px-1.5 py-0.5 rounded-full ${isOnline ? "bg-emerald-50 text-emerald-700" : "bg-surface-container text-on-surface-variant/70"}`}>
-																			<span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`} />
+																		<span
+																			className={`inline-flex items-center gap-0.5 text-[0.58rem] font-bold px-1.5 py-0.5 rounded-full ${isOnline ? "bg-emerald-50 text-emerald-700" : "bg-surface-container text-on-surface-variant/70"}`}
+																		>
+																			<span
+																				className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`}
+																			/>
 																			{isOnline ? "Online" : "Offline"}
 																		</span>
 																	</div>
@@ -801,7 +830,10 @@ export default function FindTherapistPage() {
 											variant="outline"
 											className="text-[0.75rem] rounded-sm px-5 h-8 gap-2 border-outline-variant"
 											onClick={() =>
-												fetchRecommendations(searchInput.trim() || undefined, true)
+												fetchRecommendations(
+													searchInput.trim() || undefined,
+													true,
+												)
 											}
 										>
 											<ArrowClockwise size={13} /> Try Again
@@ -848,7 +880,10 @@ export default function FindTherapistPage() {
 												return therapists.map((t) => {
 													const initials = getInitials(t.name);
 													const match = Math.round(t.score * 100);
-													const isOnline = t.therapistId in presenceMap ? presenceMap[t.therapistId] === "online" : t.status === "online";
+													const isOnline =
+														t.therapistId in presenceMap
+															? presenceMap[t.therapistId] === "online"
+															: t.status === "online";
 													const rating = parseFloat(t.rating ?? "5").toFixed(1);
 													const tags = getTags(t.specializations);
 													const bio =
@@ -906,8 +941,12 @@ export default function FindTherapistPage() {
 																		<span className="text-[0.58rem] font-extrabold uppercase tracking-widest text-primary">
 																			{roleLabel}
 																		</span>
-																		<span className={`inline-flex items-center gap-0.5 text-[0.58rem] font-bold px-1.5 py-0.5 rounded-full ${isOnline ? "bg-emerald-50 text-emerald-700" : "bg-surface-container text-on-surface-variant/70"}`}>
-																			<span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`} />
+																		<span
+																			className={`inline-flex items-center gap-0.5 text-[0.58rem] font-bold px-1.5 py-0.5 rounded-full ${isOnline ? "bg-emerald-50 text-emerald-700" : "bg-surface-container text-on-surface-variant/70"}`}
+																		>
+																			<span
+																				className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`}
+																			/>
 																			{isOnline ? "Online" : "Offline"}
 																		</span>
 																	</div>

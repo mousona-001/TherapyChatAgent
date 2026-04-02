@@ -77,8 +77,16 @@ export class RecommendationController {
 		summary: "Search therapists by name, specialty, or concern",
 	})
 	@ApiQuery({ name: "q", description: "Search term" })
-	@ApiQuery({ name: "limit", required: false, description: "Page size (default 8)" })
-	@ApiQuery({ name: "offset", required: false, description: "Number of results to skip (default 0)" })
+	@ApiQuery({
+		name: "limit",
+		required: false,
+		description: "Page size (default 8)",
+	})
+	@ApiQuery({
+		name: "offset",
+		required: false,
+		description: "Number of results to skip (default 0)",
+	})
 	async searchTherapists(
 		@Session() session: UserSession,
 		@Res() res: Response,
