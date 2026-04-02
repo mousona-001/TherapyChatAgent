@@ -10,6 +10,16 @@ import { SpecializationSelect } from "@/features/onboarding/components/Specializ
 import { Input, Combobox, Button } from "@repo/ui";
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+const THERAPIST_TYPES = [
+  { value: "Individual", label: "Individual Therapy" },
+  { value: "Couples", label: "Couples Therapy" },
+  { value: "Family", label: "Family Therapy" },
+  { value: "Child", label: "Child & Adolescent Therapy" },
+  { value: "Group", label: "Group Therapy" },
+  { value: "Psychiatric", label: "Psychiatry / Medication Mgmt" },
+  { value: "Other", label: "Other" },
+];
+
 const LICENSE_TYPES = [
   { value: "LCSW", label: "LCSW" },
   { value: "LPC", label: "LPC" },
@@ -27,6 +37,7 @@ export default function TherapistStep3() {
   const { loading } = useOnboardingRedirect();
   const [yearsOfExperience, setYearsOfExperience] = useLocalStorage("therapist_yearsOfExperience", 1);
   const [specializations, setSpecializations] = useLocalStorage<string[]>("therapist_specializations", ["CBT", "Trauma"]);
+  const [therapistType, setTherapistType] = useLocalStorage("therapist_therapistType", "");
   const [licenseNumber, setLicenseNumber] = useLocalStorage("therapist_licenseNumber", "");
   const [licenseType, setLicenseType] = useLocalStorage("therapist_licenseType", "");
   const [saving, setSaving] = useState(false);
@@ -38,6 +49,7 @@ export default function TherapistStep3() {
       if (data) {
         if (data.yearsOfExperience !== undefined) setYearsOfExperience(data.yearsOfExperience);
         if (data.specializations) setSpecializations(data.specializations);
+        if (data.therapistType) setTherapistType(data.therapistType);
         if (data.licenseNumber) setLicenseNumber(data.licenseNumber);
         if (data.licenseType) setLicenseType(data.licenseType);
       }
@@ -52,6 +64,7 @@ export default function TherapistStep3() {
     setError("");
     try {
       const result = await updateTherapistProfile({
+        therapistType: therapistType || undefined,
         licenseNumber: licenseNumber || undefined,
         licenseType: licenseType || undefined,
         yearsOfExperience,
@@ -91,6 +104,15 @@ export default function TherapistStep3() {
       </div>
 
       <FormCard>
+        <FormGroup>
+          <FormLabel>Role type</FormLabel>
+          <Combobox
+            options={THERAPIST_TYPES}
+            value={therapistType}
+            onChange={setTherapistType}
+            placeholder="Select role type"
+          />
+        </FormGroup>
         <FormRow2>
           <FormGroup>
             <FormLabel>License number (NPI or State ID)</FormLabel>

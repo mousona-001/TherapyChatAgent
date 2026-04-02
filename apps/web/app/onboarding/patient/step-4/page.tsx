@@ -1,191 +1,216 @@
-"use client"
+"use client";
 import { useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
-import {
-  Heartbeat,
-  SealCheck,
-  FileText,
-  ShieldCheck,
-} from "@phosphor-icons/react";
-import { OnboardingLayout } from "@/features/onboarding/components/OnboardingLayout";
 import { BottomBar } from "@/features/onboarding/components/BottomBar";
 import {
-  FormCard,
-  FormGroup,
-  FormLabel,
-  FormRow2,
+	FormCard,
+	FormGroup,
+	FormLabel,
+	FormRow2,
 } from "@/features/onboarding/components/FormCard";
-import { Input, Checkbox, PhoneInput, isValidPhoneNumber } from "@repo/ui";
+import { OnboardingLayout } from "@/features/onboarding/components/OnboardingLayout";
+import {
+	FileText,
+	Heartbeat,
+	SealCheck,
+	ShieldCheck,
+} from "@phosphor-icons/react";
+import { Checkbox, Input, PhoneInput, isValidPhoneNumber } from "@repo/ui";
+import { useRouter } from "next/navigation";
 
-import { updatePatientProfile, getProfile } from "../../actions";
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { getProfile, updatePatientProfile } from "../../actions";
 
 export default function PatientStep4() {
-  const router = useRouter();
-  const { loading } = useOnboardingRedirect();
-  const [agreed, setAgreed] = useLocalStorage("patient_agreed", false);
-  const [ecFirstName, setEcFirstName] = useLocalStorage("patient_ecFirstName", "");
-  const [ecLastName, setEcLastName] = useLocalStorage("patient_ecLastName", "");
-  const [ecPhone, setEcPhone] = useLocalStorage("patient_ecPhone", "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+	const router = useRouter();
+	const { loading } = useOnboardingRedirect();
+	const [agreed, setAgreed] = useLocalStorage("patient_agreed", false);
+	const [ecFirstName, setEcFirstName] = useLocalStorage(
+		"patient_ecFirstName",
+		"",
+	);
+	const [ecLastName, setEcLastName] = useLocalStorage("patient_ecLastName", "");
+	const [ecPhone, setEcPhone] = useLocalStorage("patient_ecPhone", "");
+	const [saving, setSaving] = useState(false);
+	const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function sync() {
-      const { data } = await getProfile("patient");
-      if (data?.emergencyContactName) {
-        const parts = data.emergencyContactName.split(" ");
-        setEcFirstName(parts[0] || "");
-        setEcLastName(parts.slice(1).join(" ") || "");
-      }
-      if (data?.emergencyContactPhone) {
-        setEcPhone(data.emergencyContactPhone.replace("+91", ""));
-      }
-    }
-    sync();
-  }, []);
+	useEffect(() => {
+		async function sync() {
+			const { data } = await getProfile("patient");
+			if (data?.emergencyContactName) {
+				const parts = data.emergencyContactName.split(" ");
+				setEcFirstName(parts[0] || "");
+				setEcLastName(parts.slice(1).join(" ") || "");
+			}
+			if (data?.emergencyContactPhone) {
+				setEcPhone(data.emergencyContactPhone.replace("+91", ""));
+			}
+		}
+		sync();
+	}, []);
 
-  const isEcValid = !!(ecFirstName && ecLastName && ecPhone && isValidPhoneNumber(ecPhone));
-  
-  if (loading) return null;
+	const isEcValid = !!(
+		ecFirstName &&
+		ecLastName &&
+		ecPhone &&
+		isValidPhoneNumber(ecPhone)
+	);
 
-  const handleFinish = async () => {
-    if (!agreed) return;
-    setSaving(true);
-    setError("");
-    try {
-      const result = await updatePatientProfile({
-        emergencyContactName: `${ecFirstName} ${ecLastName}`.trim() || undefined,
-        emergencyContactPhone: ecPhone ? `+91${ecPhone.replace(/\D/g, "")}` : undefined,
-      });
-      if (result.error) throw new Error(result.error);
-      // Artificial delay to show saving state and look premium
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push("/dashboard/find-therapist");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save. Please try again.");
-      setSaving(false);
-    }
-  };
+	if (loading) return null;
 
-  return (
-    <OnboardingLayout>
-      <p className="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[var(--on-surface-variant)] mb-[1.25rem]">
-        Step 4 of 4 &bull; Safety Net
-      </p>
+	const handleFinish = async () => {
+		if (!agreed) return;
+		setSaving(true);
+		setError("");
+		try {
+			const result = await updatePatientProfile({
+				emergencyContactName:
+					`${ecFirstName} ${ecLastName}`.trim() || undefined,
+				emergencyContactPhone: ecPhone
+					? `+91${ecPhone.replace(/\D/g, "")}`
+					: undefined,
+			});
+			if (result.error) throw new Error(result.error);
+			// Artificial delay to show saving state and look premium
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+			router.push("/find-therapist");
+		} catch (e) {
+			setError(
+				e instanceof Error ? e.message : "Failed to save. Please try again.",
+			);
+			setSaving(false);
+		}
+	};
 
-      <h1 className="text-[clamp(2rem,5vw,2.75rem)] font-extrabold tracking-[-0.02em] text-[var(--on-surface)] text-center w-full leading-[1.15] mb-[1rem]">
-        Someone we can reach<br />if needed.
-      </h1>
+	return (
+		<OnboardingLayout>
+			<p className="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[var(--on-surface-variant)] mb-[1.25rem]">
+				Step 4 of 4 &bull; Safety Net
+			</p>
 
-      <p className="text-[0.95rem] font-normal text-[var(--on-surface-variant)] text-center leading-[1.65] max-w-[440px] mb-[3rem]">
-        In a clinical emergency, your care team may need to contact someone you trust. This
-        information is stored securely and used only when your safety is at risk.
-      </p>
+			<h1 className="text-[clamp(2rem,5vw,2.75rem)] font-extrabold tracking-[-0.02em] text-[var(--on-surface)] text-center w-full leading-[1.15] mb-[1rem]">
+				Someone we can reach
+				<br />
+				if needed.
+			</h1>
 
-      {/* Emergency Contact */}
-      <div className="flex items-center justify-center gap-[0.5rem] text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[var(--on-surface-variant)] mb-[1.25rem] w-full">
-        <Heartbeat weight="bold" size={16} className="opacity-55" />
-        Emergency contact
-      </div>
+			<p className="text-[0.95rem] font-normal text-[var(--on-surface-variant)] text-center leading-[1.65] max-w-[440px] mb-[3rem]">
+				In a clinical emergency, your care team may need to contact someone you
+				trust. This information is stored securely and used only when your
+				safety is at risk.
+			</p>
 
-      <FormCard>
-        <FormRow2>
-          <FormGroup>
-            <FormLabel>First name</FormLabel>
-            <Input
-              value={ecFirstName}
-              onChange={(e) => setEcFirstName(e.target.value)}
-              placeholder="e.g. Morgan"
-            />
-          </FormGroup>
-          <FormGroup>
-            <FormLabel>Last name</FormLabel>
-            <Input
-              value={ecLastName}
-              onChange={(e) => setEcLastName(e.target.value)}
-              placeholder="e.g. Chen"
-            />
-          </FormGroup>
-        </FormRow2>
+			{/* Emergency Contact */}
+			<div className="flex items-center justify-center gap-[0.5rem] text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[var(--on-surface-variant)] mb-[1.25rem] w-full">
+				<Heartbeat weight="bold" size={16} className="opacity-55" />
+				Emergency contact
+			</div>
 
-        <FormGroup>
-          <FormLabel>Phone number</FormLabel>
-          <PhoneInput
-            value={ecPhone}
-            onChange={setEcPhone}
-            placeholder="98765 43210"
-            defaultCountry="IN"
-          />
-        </FormGroup>
-      </FormCard>
+			<FormCard>
+				<FormRow2>
+					<FormGroup>
+						<FormLabel>First name</FormLabel>
+						<Input
+							value={ecFirstName}
+							onChange={(e) => setEcFirstName(e.target.value)}
+							placeholder="e.g. Morgan"
+						/>
+					</FormGroup>
+					<FormGroup>
+						<FormLabel>Last name</FormLabel>
+						<Input
+							value={ecLastName}
+							onChange={(e) => setEcLastName(e.target.value)}
+							placeholder="e.g. Chen"
+						/>
+					</FormGroup>
+				</FormRow2>
 
-      {/* Clinical Consent */}
-      <div className="flex items-center justify-center gap-[0.5rem] text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[var(--on-surface-variant)] mb-[1.25rem] mt-6 w-full">
-        <SealCheck weight="bold" size={16} className="opacity-55" />
-        Clinical consent
-      </div>
+				<FormGroup>
+					<FormLabel>Phone number</FormLabel>
+					<PhoneInput
+						value={ecPhone}
+						onChange={setEcPhone}
+						placeholder="98765 43210"
+						defaultCountry="IN"
+					/>
+				</FormGroup>
+			</FormCard>
 
-      <div className="bg-[var(--surface-container-lowest)] rounded-[var(--r-lg)] p-6 w-full shadow-[var(--shadow)] mb-10 flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <div className="w-[38px] h-[38px] shrink-0 rounded-[var(--r-sm)] bg-[var(--primary-container)] flex items-center justify-center text-[var(--primary)]">
-            <FileText size={18} weight="fill" />
-          </div>
-          <div className="flex flex-col">
-            <strong className="block text-[0.88rem] font-bold text-[var(--on-surface)] mb-[0.15rem] tracking-[-0.01em]">
-              Legal authorization for emergency procedures.
-            </strong>
-            <span className="text-[0.75rem] text-[var(--on-surface-variant)] leading-[1.5]">
-              Read carefully before providing your consent below.
-            </span>
-          </div>
-        </div>
+			{/* Clinical Consent */}
+			<div className="flex items-center justify-center gap-[0.5rem] text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[var(--on-surface-variant)] mb-[1.25rem] mt-6 w-full">
+				<SealCheck weight="bold" size={16} className="opacity-55" />
+				Clinical consent
+			</div>
 
-        <div className="h-px w-full bg-[var(--surface-container-low)]" />
+			<div className="bg-[var(--surface-container-lowest)] rounded-[var(--r-lg)] p-6 w-full shadow-[var(--shadow)] mb-10 flex flex-col gap-4">
+				<div className="flex items-start gap-3">
+					<div className="w-[38px] h-[38px] shrink-0 rounded-[var(--r-sm)] bg-[var(--primary-container)] flex items-center justify-center text-[var(--primary)]">
+						<FileText size={18} weight="fill" />
+					</div>
+					<div className="flex flex-col">
+						<strong className="block text-[0.88rem] font-bold text-[var(--on-surface)] mb-[0.15rem] tracking-[-0.01em]">
+							Legal authorization for emergency procedures.
+						</strong>
+						<span className="text-[0.75rem] text-[var(--on-surface-variant)] leading-[1.5]">
+							Read carefully before providing your consent below.
+						</span>
+					</div>
+				</div>
 
-        <p className="text-[0.78rem] text-[var(--on-surface-variant)] leading-[1.7]">
-          I provide clinical consent for my provider to contact the individual listed above in the event of a
-          clinical emergency. I understand that this information is stored securely and will only be accessed when
-          my immediate safety is at risk.
-        </p>
+				<div className="h-px w-full bg-[var(--surface-container-low)]" />
 
-        <div className="flex items-start gap-3 cursor-pointer group mt-2 select-none" onClick={() => setAgreed(!agreed)}>
-          <Checkbox
-            id="clinical-consent"
-            checked={agreed}
-            onCheckedChange={(checked) => setAgreed(!!checked)}
-            className="w-[18px] h-[18px] rounded-sm bg-surface-container-low border-2 border-surface-container data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-white [&_svg]:stroke-[3px] [&_svg]:w-3.5 [&_svg]:h-3.5 shrink-0 mt-[0.1rem]"
-          />
-          <label
-            htmlFor="clinical-consent"
-            className="text-[0.82rem] font-semibold text-[var(--on-surface)] leading-[1.55] cursor-pointer"
-          >
-            I have read and agree to the clinical consent terms above.
-          </label>
-        </div>
-      </div>
+				<p className="text-[0.78rem] text-[var(--on-surface-variant)] leading-[1.7]">
+					I provide clinical consent for my provider to contact the individual
+					listed above in the event of a clinical emergency. I understand that
+					this information is stored securely and will only be accessed when my
+					immediate safety is at risk.
+				</p>
 
-      {/* Reassurance Strip */}
-      <div className="flex items-center gap-[0.6rem] bg-[var(--surface-container-low)] rounded-[var(--r-md)] px-4 py-[0.85rem] w-full mb-10">
-        <ShieldCheck className="text-[var(--on-surface-variant)] opacity-70 shrink-0" size={16} weight="fill" />
-        <p className="text-[0.73rem] text-[var(--on-surface-variant)] leading-[1.5] m-0">
-          Your emergency contact&apos;s details are encrypted and never shared outside your care team. Access is
-          strictly limited to verified clinical emergencies.
-        </p>
-      </div>
+				<div
+					className="flex items-start gap-3 cursor-pointer group mt-2 select-none"
+					onClick={() => setAgreed(!agreed)}
+				>
+					<Checkbox
+						id="clinical-consent"
+						checked={agreed}
+						onCheckedChange={(checked) => setAgreed(!!checked)}
+						className="w-[18px] h-[18px] rounded-sm bg-surface-container-low border-2 border-surface-container data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-white [&_svg]:stroke-[3px] [&_svg]:w-3.5 [&_svg]:h-3.5 shrink-0 mt-[0.1rem]"
+					/>
+					<label
+						htmlFor="clinical-consent"
+						className="text-[0.82rem] font-semibold text-[var(--on-surface)] leading-[1.55] cursor-pointer"
+					>
+						I have read and agree to the clinical consent terms above.
+					</label>
+				</div>
+			</div>
 
-      {error && <p className="text-red-500 text-sm -mt-6 mb-4">{error}</p>}
+			{/* Reassurance Strip */}
+			<div className="flex items-center gap-[0.6rem] bg-[var(--surface-container-low)] rounded-[var(--r-md)] px-4 py-[0.85rem] w-full mb-10">
+				<ShieldCheck
+					className="text-[var(--on-surface-variant)] opacity-70 shrink-0"
+					size={16}
+					weight="fill"
+				/>
+				<p className="text-[0.73rem] text-[var(--on-surface-variant)] leading-[1.5] m-0">
+					Your emergency contact&apos;s details are encrypted and never shared
+					outside your care team. Access is strictly limited to verified
+					clinical emergencies.
+				</p>
+			</div>
 
-      <BottomBar
-        totalSteps={4}
-        currentStep={4}
-        nextLabel={saving ? "Saving…" : "Continue"}
-        onNext={handleFinish}
-        showBack={true}
-        disabled={!agreed || !isEcValid || saving}
-      />
-    </OnboardingLayout>
-  );
+			{error && <p className="text-red-500 text-sm -mt-6 mb-4">{error}</p>}
+
+			<BottomBar
+				totalSteps={4}
+				currentStep={4}
+				nextLabel={saving ? "Saving…" : "Continue"}
+				onNext={handleFinish}
+				showBack={true}
+				disabled={!agreed || !isEcValid || saving}
+			/>
+		</OnboardingLayout>
+	);
 }

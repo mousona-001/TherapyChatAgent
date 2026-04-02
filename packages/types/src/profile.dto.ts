@@ -40,6 +40,11 @@ export class CreateTherapistProfileDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  therapistType?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   licenseNumber?: string;
 
   @ApiProperty({ required: false })

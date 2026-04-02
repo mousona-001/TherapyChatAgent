@@ -63,14 +63,14 @@ export function Sidebar() {
 	const navItems = [
 		{
 			label: "Home",
-			href: isTherapist ? "/connections" : "/dashboard/find-therapist",
+			href: isTherapist ? "/connections" : "/find-therapist",
 			icon: House,
 		},
 		{ label: "Journal", href: "/journal", icon: Notebook },
 		{ label: "Community", href: "/community", icon: Users },
 		{
 			label: "Explore",
-			href: "/dashboard/find-therapist",
+			href: "/find-therapist",
 			icon: MagnifyingGlass,
 			hidden: isTherapist,
 		},
@@ -81,7 +81,7 @@ export function Sidebar() {
 			{/* Brand */}
 			<div className="p-6 mb-2">
 				<Link
-					href={isTherapist ? "/connections" : "/dashboard/find-therapist"}
+					href={isTherapist ? "/connections" : "/find-therapist"}
 					className="flex items-center gap-2"
 				>
 					<div className="w-8 h-8 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white shadow-lg shadow-primary/20">
@@ -149,24 +149,28 @@ export function Sidebar() {
 						connections.map((conn) => {
 							const name =
 								conn.therapistName || conn.patientName || "Anonymous";
-							const chatPath = conn.sessionId
-								? `/chat/${conn.sessionId}`
-								: `/chat?connectionId=${conn.id}`;
+							const isPending = conn.status === "pending";
+							const chatPath = !isPending
+								? conn.sessionId
+									? `/chat/${conn.sessionId}`
+									: `/chat?connectionId=${conn.id}`
+								: null;
 							const isActive =
-								pathname.includes(conn.id) ||
-								(conn.sessionId && pathname.includes(conn.sessionId));
+								!isPending &&
+								(pathname.includes(conn.id) ||
+									(conn.sessionId && pathname.includes(conn.sessionId)));
 
-							return (
-								<Link
-									key={conn.id}
-									href={chatPath}
-									className={cn(
-										"flex items-center gap-3 px-3 py-2 rounded-[var(--r-md)] transition-all group",
-										isActive
-											? "bg-[var(--surface-container-low)] text-[var(--on-surface)] font-semibold"
-											: "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]",
-									)}
-								>
+							const itemClass = cn(
+								"flex items-center gap-3 px-3 py-2 rounded-[var(--r-md)] transition-all group",
+								isActive
+									? "bg-[var(--surface-container-low)] text-[var(--on-surface)] font-semibold"
+									: isPending
+										? "text-[var(--on-surface-variant)] opacity-50 cursor-default"
+										: "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]",
+							);
+
+							const inner = (
+								<>
 									<div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-100 flex-shrink-0 relative">
 										<Image
 											src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
@@ -193,12 +197,22 @@ export function Sidebar() {
 										)}
 									</div>
 									<span className="text-[0.85rem] truncate">{name}</span>
-									{conn.status === "pending" && (
+									{isPending && (
 										<div
 											className="w-1.5 h-1.5 rounded-full bg-amber-400 ml-auto"
 											title="Pending approval"
 										/>
 									)}
+								</>
+							);
+
+							return isPending ? (
+								<div key={conn.id} className={itemClass}>
+									{inner}
+								</div>
+							) : (
+								<Link key={conn.id} href={chatPath!} className={itemClass}>
+									{inner}
 								</Link>
 							);
 						})

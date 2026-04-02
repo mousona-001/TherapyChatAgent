@@ -55,7 +55,7 @@ function ChatPageContent() {
   };
 
    return (
-    <DashboardLayout title="Messages" subtitle="Secure, confidential conversation room.">
+    <DashboardLayout>
        <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-[var(--surface-container-lowest)] rounded-[32px] border border-[var(--outline-variant)] border-dashed">
           <div className="w-16 h-16 rounded-3xl bg-indigo-50 flex items-center justify-center text-indigo-500 mb-6">
              <div className="animate-pulse text-2xl">✨</div>
@@ -80,7 +80,7 @@ function ChatPageContent() {
 export default function ChatPage() {
   return (
     <Suspense fallback={
-       <DashboardLayout title="Messages" subtitle="Secure, confidential conversation room.">
+       <DashboardLayout>
           <div className="h-full flex items-center justify-center p-20">
              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500" />
           </div>

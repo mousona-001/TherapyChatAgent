@@ -11,10 +11,13 @@
     "start:prod": "node dist/main",
     "test:crisis": "ts-node scripts/test-crisis.ts",
     "test:optimize": "ts-node scripts/prompts/optimizer.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:purge": "ts-node scripts/purge-db.ts",
-    "seed:therapists": "ts-node scripts/seed-therapists.ts"
+    "seed:therapists": "ts-node scripts/seed-therapists.ts",
+    "seed:sessions": "ts-node scripts/seed-sessions.ts"
   },
   "keywords": [],
   "author": "",

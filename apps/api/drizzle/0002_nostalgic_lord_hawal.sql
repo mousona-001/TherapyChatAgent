@@ -1,0 +1,1 @@
+ALTER TABLE "therapist_connection" ADD COLUMN "next_session" timestamp;

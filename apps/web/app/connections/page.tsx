@@ -42,10 +42,7 @@ export default function ConnectionsPage() {
   const accepted = connections.filter(c => c.status === 'accepted');
 
   return (
-    <DashboardLayout 
-      title="Network Management" 
-      subtitle="Manage your patient care requests and active clinician network."
-    >
+    <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-12 p-6 animate-in fade-in duration-700">
         
         {/* Pending Requests Section */}

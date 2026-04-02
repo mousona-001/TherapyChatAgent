@@ -8,6 +8,27 @@
       "when": 1774176566900,
       "tag": "0000_luxuriant_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775057873951,
+      "tag": "0001_perfect_lyja",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775068122007,
+      "tag": "0002_nostalgic_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775071743313,
+      "tag": "0003_ordinary_raider",
+      "breakpoints": true
     }
   ]
 }

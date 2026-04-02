@@ -24,6 +24,15 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        input: false, // not settable via sign-up, only via profile creation
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },

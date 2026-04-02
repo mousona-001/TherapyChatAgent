@@ -62,7 +62,7 @@ export default function ChatSessionPage() {
   if (!sessionId) return null;
 
   return (
-    <DashboardLayout title="Support Room" subtitle="Secure, end-to-end encrypted messaging.">
+    <DashboardLayout>
        <div className="h-full max-w-[1000px] mx-auto bg-white rounded-[32px] shadow-2xl shadow-indigo-100/30 border border-[var(--outline-variant)] overflow-hidden">
           <ChatWindow 
             sessionId={sessionId} 
