@@ -97,6 +97,9 @@ export const patientProfile = pgTable("patient_profile", {
 		{ onDelete: "set null" },
 	),
 	reasonForSeeking: text("reason_for_seeking"),
+	status: text("status", { enum: ["online", "offline"] })
+		.notNull()
+		.default("offline"),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull(),
 });

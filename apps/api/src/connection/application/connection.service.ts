@@ -130,6 +130,7 @@ export class ConnectionService {
 					therapistRating: therapistProfile.rating,
 					therapistReviewCount: therapistProfile.reviewCount,
 					therapistStatus: therapistProfile.status,
+					patientUserId: patientProfile.userId,
 					sessionId: chatSession.id,
 					nextSession: therapistConnection.nextSession,
 				})
@@ -139,6 +140,10 @@ export class ConnectionService {
 					eq(therapistConnection.therapistId, therapistProfile.id),
 				)
 				.innerJoin(user, eq(therapistProfile.userId, user.id))
+				.innerJoin(
+					patientProfile,
+					eq(therapistConnection.patientId, patientProfile.id),
+				)
 				.leftJoin(
 					chatSession,
 					eq(chatSession.connectionId, therapistConnection.id),
@@ -162,6 +167,7 @@ export class ConnectionService {
 					patientName: user.name,
 					patientUserId: patientProfile.userId,
 					patientReason: patientProfile.reasonForSeeking,
+					patientStatus: patientProfile.status,
 					sessionId: chatSession.id,
 					nextSession: therapistConnection.nextSession,
 				})

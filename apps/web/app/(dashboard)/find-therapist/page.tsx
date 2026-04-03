@@ -7,6 +7,8 @@ import {
 	getTherapistRecommendations,
 	searchTherapists,
 } from "@/app/onboarding/actions";
+import { DashboardPageHeader } from "@/features/dashboard/components/DashboardPageHeader";
+import { usePresence } from "@/hooks/usePresence";
 import {
 	ArrowClockwise,
 	CalendarBlank,
@@ -18,10 +20,8 @@ import {
 	Warning,
 } from "@phosphor-icons/react";
 import { Button, Input } from "@repo/ui";
-import { DashboardPageHeader } from "@/features/dashboard/components/DashboardPageHeader";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePresence } from "@/hooks/usePresence";
 
 interface Connection {
 	id: string;
@@ -158,7 +158,7 @@ export default function FindTherapistPage() {
 					if (cached) {
 						const { data, ts } = JSON.parse(cached);
 						// Cache valid for 5 minutes
-						if (Date.now() - ts < 5 * 60 * 1000 && mountedRef.current) {
+						if (Date.now() - ts < 5 * 60 * 1000) {
 							setTherapists(data);
 							setLoading(false);
 							return;
@@ -172,7 +172,6 @@ export default function FindTherapistPage() {
 					queryOverride,
 					15,
 				);
-				if (!mountedRef.current) return;
 				if (apiError) throw new Error(apiError as string);
 				setTherapists(data || []);
 				if (!queryOverride) {
@@ -184,11 +183,10 @@ export default function FindTherapistPage() {
 					} catch {}
 				}
 			} catch (e) {
-				if (!mountedRef.current) return;
 				setError(e instanceof Error ? e.message : "Failed to load matches");
 				setTherapists([]);
 			} finally {
-				if (mountedRef.current) setLoading(false);
+				setLoading(false);
 			}
 		},
 		[],
@@ -206,7 +204,7 @@ export default function FindTherapistPage() {
 				const cached = sessionStorage.getItem(connCacheKey);
 				if (cached) {
 					const { data, ts } = JSON.parse(cached);
-					if (Date.now() - ts < 2 * 60 * 1000 && mountedRef.current) {
+					if (Date.now() - ts < 2 * 60 * 1000) {
 						setConnections(data);
 						return;
 					}
@@ -215,7 +213,7 @@ export default function FindTherapistPage() {
 
 			getConnections("patient")
 				.then((result) => {
-					if (result.success && result.data && mountedRef.current) {
+					if (result.success && result.data) {
 						setConnections(result.data as Connection[]);
 						try {
 							sessionStorage.setItem(
@@ -301,22 +299,18 @@ export default function FindTherapistPage() {
 		const apiPromise = getDeepTherapistRecommendations();
 		setAnalysisStep("profiling");
 		await new Promise((r) => setTimeout(r, 750));
-		if (!mountedRef.current) return;
 		setAnalysisStep("searching");
 		await new Promise((r) => setTimeout(r, 750));
-		if (!mountedRef.current) return;
 		setAnalysisStep("ranking");
 		try {
 			const { data, error: apiError } = await apiPromise;
-			if (!mountedRef.current) return;
 			if (apiError) throw new Error(apiError as string);
 			setTherapists(data || []);
 			setIsDeepResults(true);
 		} catch (e) {
-			if (!mountedRef.current) return;
 			setError(e instanceof Error ? e.message : "Deep analysis failed");
 		} finally {
-			if (mountedRef.current) setAnalysisStep(null);
+			setAnalysisStep(null);
 		}
 	};
 
@@ -404,9 +398,7 @@ export default function FindTherapistPage() {
 									{acceptedConnections.map((conn) => {
 										const connInitials = getInitials(conn.therapistName);
 										const nextLabel = formatNextSession(conn.nextSession);
-										const chatHref = conn.sessionId
-											? `/chat/${conn.sessionId}`
-											: `/chat?connectionId=${conn.id}`;
+										const chatHref = `/sessions?connection=${conn.id}`;
 										const rating = parseFloat(
 											conn.therapistRating ?? "5",
 										).toFixed(1);

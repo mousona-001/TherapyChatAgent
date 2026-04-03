@@ -107,6 +107,23 @@ export class ChatHistoryRepository {
 		};
 	}
 
+	/**
+	 * Load message history for a session by sessionId only (no ownership check).
+	 * Use this in streaming/AI paths where access is already verified at join time.
+	 */
+	async getMessagesForSession(sessionId: string): Promise<ChatMessageRecord[]> {
+		const docs = await this.messageModel
+			.find({ sessionId })
+			.sort({ createdAt: 1 })
+			.lean()
+			.exec();
+		return docs.map((d) => ({
+			role: d.role,
+			content: d.content,
+			senderId: d.senderId,
+		}));
+	}
+
 	/** Persist a single message turn to MongoDB. */
 	async addMessage(
 		sessionId: string,

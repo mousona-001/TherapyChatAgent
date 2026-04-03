@@ -29,6 +29,13 @@
       "when": 1775071743313,
       "tag": "0003_ordinary_raider",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775156561137,
+      "tag": "0004_harsh_stellaris",
+      "breakpoints": true
     }
   ]
 }

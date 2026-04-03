@@ -57,16 +57,17 @@ export default async function middleware(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// 3. Check session if we have a cookie or are accessing protected routes
-	let session: Session | null = null;
-	if (sessionCookie || isProtectedRoute || isAuthRoute) {
-		session = await getSession(request);
+	// 3. Protected routes — use cookie as first gate (no API call required).
+	//    This prevents kicking users to /signin when the API is temporarily unreachable.
+	if (isProtectedRoute && !sessionCookie) {
+		return NextResponse.redirect(new URL("/signin", request.url));
 	}
 
-	// 4. Protected routes — require a valid session
-	if (isProtectedRoute && !session) {
-		const redirectUrl = new URL("/signin", request.url);
-		return NextResponse.redirect(redirectUrl);
+	// 4. Fetch full session only when needed for role-based routing.
+	//    If the API is unreachable we degrade gracefully — real auth is enforced at the API boundary.
+	let session: Session | null = null;
+	if (sessionCookie || isAuthRoute) {
+		session = await getSession(request);
 	}
 
 	// 5. Auth routes — redirect to dashboard if already logged in
@@ -113,15 +114,24 @@ export default async function middleware(request: NextRequest) {
  */
 async function getSession(request: NextRequest) {
 	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 3000);
 		const response = await fetch(`${env.API_URL}/api/auth/get-session`, {
 			headers: {
 				cookie: request.headers.get("cookie") ?? "",
 			},
+			signal: controller.signal,
 		});
+		clearTimeout(timeout);
 		if (!response.ok) return null;
 		return await response.json();
 	} catch (error) {
-		console.error("Failed to fetch session in proxy:", error);
+		// Network error or timeout — API temporarily unreachable. Log and continue.
+		const isAbort = error instanceof Error && error.name === "AbortError";
+		console.warn(
+			`[Proxy] Session fetch ${isAbort ? "timed out" : "failed"} — degrading gracefully:`,
+			error instanceof Error ? error.message : error,
+		);
 		return null;
 	}
 }

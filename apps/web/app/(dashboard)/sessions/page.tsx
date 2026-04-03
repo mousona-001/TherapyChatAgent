@@ -1,14 +1,20 @@
 "use client";
 
 import {
+	checkOnboardingStatus,
 	createChatSession,
 	getChatSessions,
 	getConnections,
 	getMessages,
-	sendMessage as sendMessageAction,
+	respondToConnection,
 } from "@/app/onboarding/actions";
-import { useUnread } from "@/features/dashboard/components/UnreadContext";
+import { useChatSocket } from "@/features/chat/hooks/useChatSocket";
+import {
+	PresenceStatus,
+	usePresenceSocket,
+} from "@/features/chat/hooks/usePresenceSocket";
 import { DashboardPageHeader } from "@/features/dashboard/components/DashboardPageHeader";
+import { useUnread } from "@/features/dashboard/components/UnreadContext";
 import {
 	CalendarBlank,
 	CaretDown,
@@ -24,6 +30,7 @@ import {
 	Warning,
 	X,
 } from "@phosphor-icons/react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -31,27 +38,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface Connection {
 	id: string;
 	status: "accepted" | "pending" | string;
-	therapistId: string;
-	therapistName: string;
-	therapistStatus: string | null;
-	therapistRating: string | null;
-	sessionId: string | null;
-	nextSession: string | null;
+	// Patient-perspective fields
+	therapistId?: string;
+	therapistName?: string;
+	therapistStatus?: string | null;
+	therapistRating?: string | null;
 	therapistSpecializations?: string | null;
 	therapistType?: string | null;
+	// Therapist-perspective fields
+	patientId?: string;
+	patientName?: string;
+	patientUserId?: string | null;
+	patientStatus?: string | null;
+	// User IDs for presence lookup
+	therapistUserId?: string | null;
+	sessionId: string | null;
+	nextSession: string | null;
 }
 
 interface ChatSession {
 	id: string;
 	connectionId?: string | null;
-}
-
-interface Message {
-	id?: string;
-	role?: string;
-	content: string;
-	senderId?: string;
-	createdAt?: string;
 }
 
 type FilterTab = "all" | "active" | "archived" | "requested";
@@ -121,7 +128,7 @@ function ChatSkeleton() {
 
 // ─── Empty States ─────────────────────────────────────────────────────────────
 
-function NoConnectionsEmpty() {
+function NoConnectionsEmpty({ role }: { role: string }) {
 	return (
 		<div className="flex-1 flex flex-col items-center justify-center gap-5 p-10 text-center">
 			<div className="w-16 h-16 rounded-md bg-primary-container flex items-center justify-center">
@@ -130,15 +137,19 @@ function NoConnectionsEmpty() {
 			<div className="flex flex-col gap-2">
 				<h3 className="text-base font-bold text-on-surface">No sessions yet</h3>
 				<p className="text-sm text-on-surface-variant max-w-xs leading-relaxed">
-					Connect with a therapist to start your first session.
+					{role === "therapist"
+						? "No patients connected yet. Sessions will appear here once patients connect with you."
+						: "Connect with a therapist to start your first session."}
 				</p>
 			</div>
-			<a
-				href="/find-therapist"
-				className="px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-sm hover:bg-primary/90 transition-colors"
-			>
-				Find a Therapist
-			</a>
+			{role !== "therapist" && (
+				<a
+					href="/find-therapist"
+					className="px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-sm hover:bg-primary/90 transition-colors"
+				>
+					Find a Therapist
+				</a>
+			)}
 		</div>
 	);
 }
@@ -209,17 +220,43 @@ function ErrorBanner({
 function ChatPanel({
 	connection,
 	sessionId,
+	role,
 	onClose,
+	presenceMap,
 }: {
 	connection: Connection;
 	sessionId: string;
+	role: string;
 	onClose: () => void;
+	presenceMap: Record<string, PresenceStatus>;
 }) {
-	const [messages, setMessages] = useState<Message[]>([]);
+	const otherPartyUserId =
+		role === "therapist"
+			? connection.patientUserId
+			: connection.therapistUserId;
+
+	const currentUserId =
+		role === "therapist"
+			? (connection.therapistUserId ?? null)
+			: (connection.patientUserId ?? null);
+
+	const {
+		messages: socketMessages,
+		setMessages,
+		isTyping,
+		streamingMessage,
+		sendMessage: wsSendMessage,
+		sendTyping,
+	} = useChatSocket(
+		sessionId,
+		role as "patient" | "therapist",
+		currentUserId,
+		otherPartyUserId ?? null,
+	);
+
 	const [msgLoading, setMsgLoading] = useState(true);
 	const [msgError, setMsgError] = useState<string | null>(null);
 	const [input, setInput] = useState("");
-	const [sending, setSending] = useState(false);
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -238,7 +275,7 @@ function ChatPanel({
 		} finally {
 			setMsgLoading(false);
 		}
-	}, [sessionId]);
+	}, [sessionId, setMessages]);
 
 	useEffect(() => {
 		loadMessages();
@@ -246,34 +283,59 @@ function ChatPanel({
 
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages, msgLoading]);
+	}, [socketMessages, streamingMessage, msgLoading]);
 
-	const handleSend = async () => {
+	const handleSend = () => {
 		const text = input.trim();
-		if (!text || sending) return;
-		const optimistic: Message = {
-			content: text,
-			role: "patient",
-			senderId: "me",
-			createdAt: new Date().toISOString(),
-		};
-		setMessages((prev) => [...prev, optimistic]);
+		if (!text) return;
+		wsSendMessage(text);
 		setInput("");
 		if (textareaRef.current) {
 			textareaRef.current.style.height = "auto";
 		}
-		setSending(true);
-		try {
-			await sendMessageAction(text, sessionId);
-		} catch {
-			// optimistic message stays; a real implementation would handle errors
-		} finally {
-			setSending(false);
-		}
 	};
 
-	const isOnline = connection.therapistStatus === "online";
-	const initials = getInitials(connection.therapistName);
+	const presenceLive =
+		otherPartyUserId != null ? presenceMap[otherPartyUserId] : undefined;
+	const effectiveStatus: string =
+		presenceLive !== undefined
+			? presenceLive
+			: role === "therapist"
+				? (connection.patientStatus ?? "offline")
+				: (connection.therapistStatus ?? "offline");
+	const statusDotClass =
+		effectiveStatus === "online"
+			? "bg-emerald-500"
+			: effectiveStatus === "busy"
+				? "bg-amber-400"
+				: effectiveStatus === "unavailable"
+					? "bg-orange-400"
+					: "bg-slate-300";
+	const statusLabel =
+		effectiveStatus === "online"
+			? "Online"
+			: effectiveStatus === "busy"
+				? "Busy"
+				: effectiveStatus === "unavailable"
+					? "Away"
+					: "Offline";
+	const statusTextClass =
+		effectiveStatus === "online"
+			? "text-emerald-700"
+			: effectiveStatus === "busy"
+				? "text-amber-700"
+				: effectiveStatus === "unavailable"
+					? "text-orange-600"
+					: "text-on-surface-variant opacity-60";
+	const displayName =
+		role === "therapist"
+			? (connection.patientName ?? "Patient")
+			: (connection.therapistName ?? "Therapist");
+	const displayType =
+		role === "therapist" ? undefined : connection.therapistType;
+	const initials = getInitials(displayName);
+
+	const messages = socketMessages;
 
 	return (
 		<div className="flex flex-col h-full min-h-0">
@@ -285,33 +347,23 @@ function ChatPanel({
 							{initials}
 						</div>
 						<span
-							className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`}
+							className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${statusDotClass}`}
 						/>
 					</div>
 					<div className="min-w-0">
 						<p className="text-sm font-bold text-on-surface truncate leading-tight">
-							{connection.therapistName}
+							{displayName}
 						</p>
 						<p className="text-[0.7rem] font-medium mt-0.5 flex items-center gap-1">
-							<span
-								className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-slate-300"}`}
-							/>
-							<span
-								className={
-									isOnline
-										? "text-emerald-700"
-										: "text-on-surface-variant opacity-60"
-								}
-							>
-								{isOnline ? "Online" : "Offline"}
-							</span>
-							{connection.therapistType && (
+							<span className={`w-1.5 h-1.5 rounded-full ${statusDotClass}`} />
+							<span className={statusTextClass}>{statusLabel}</span>
+							{displayType && (
 								<>
 									<span className="text-on-surface-variant opacity-30 mx-0.5">
 										·
 									</span>
 									<span className="text-on-surface-variant opacity-60 truncate">
-										{connection.therapistType}
+										{displayType}
 									</span>
 								</>
 							)}
@@ -332,57 +384,85 @@ function ChatPanel({
 					<ChatSkeleton />
 				) : msgError ? (
 					<ErrorBanner message={msgError} onRetry={loadMessages} />
-				) : messages.length === 0 ? (
+				) : messages.length === 0 && !streamingMessage ? (
 					<NoMessagesEmpty />
 				) : (
-					messages.map((msg, i) => {
-						const isPatient =
-							msg.role === "patient" ||
-							msg.role === "user" ||
-							msg.senderId === "me";
-						const isAi = msg.role === "assistant";
-						return (
-							<div
-								key={msg.id ?? i}
-								className={`flex gap-2.5 mb-2 ${isPatient ? "flex-row-reverse" : ""}`}
-							>
-								{!isPatient && (
-									<div
-										className={`w-8 h-8 rounded-full text-[0.6rem] font-extrabold flex items-center justify-center shrink-0 mt-1 ${isAi ? "bg-surface-container-low text-on-surface-variant" : "bg-primary-container text-primary"}`}
-									>
-										{isAi ? (
-											<Sparkle className="w-4 h-4" weight="fill" />
-										) : (
-											initials
-										)}
-									</div>
-								)}
+					<>
+						{messages.map((msg, i) => {
+							const isSelf = currentUserId
+								? msg.senderId === currentUserId ||
+									(role === "therapist" && msg.senderId === "assistant")
+								: role === "therapist"
+									? msg.role === "therapist" || msg.role === "assistant"
+									: msg.role === "patient" || msg.role === "user";
+							const isAiMsg = msg.senderId === "assistant";
+							const isAi = isAiMsg && !isSelf;
+							return (
 								<div
-									className={`flex flex-col gap-1 max-w-[72%] ${isPatient ? "items-end" : ""}`}
+									key={msg.id ?? i}
+									className={`flex gap-2.5 mb-2 ${isSelf ? "flex-row-reverse" : ""}`}
 								>
-									{isAi && (
-										<p className="text-[0.62rem] font-bold text-on-surface-variant opacity-60 px-1">
-											Sama AI
-										</p>
+									{!isSelf && (
+										<div
+											className={`w-8 h-8 rounded-full text-[0.6rem] font-extrabold flex items-center justify-center shrink-0 mt-1 ${isAi ? "bg-surface-container-low text-on-surface-variant" : "bg-primary-container text-primary"}`}
+										>
+											{isAi ? (
+												<Sparkle className="w-4 h-4" weight="fill" />
+											) : (
+												initials
+											)}
+										</div>
 									)}
 									<div
-										className={`px-4 py-2.5 rounded-lg text-[0.84rem] leading-relaxed ${
-											isPatient
-												? "bg-primary text-white rounded-tr-sm"
-												: isAi
-													? "bg-surface-container border border-outline-variant rounded-tl-sm"
-													: "bg-surface-container-low rounded-tl-sm"
-										}`}
+										className={`flex flex-col gap-1 max-w-[72%] ${isSelf ? "items-end" : ""}`}
 									>
-										{msg.content}
+										{isAiMsg && (
+											<p className="text-[0.62rem] font-bold text-on-surface-variant opacity-60 px-1">
+												Sama AI
+											</p>
+										)}
+										<div
+											className={`px-4 py-2.5 rounded-lg text-[0.84rem] leading-relaxed ${
+												isSelf
+													? "bg-primary text-white rounded-tr-sm"
+													: isAi
+														? "bg-surface-container border border-outline-variant rounded-tl-sm"
+														: "bg-surface-container-low rounded-tl-sm"
+											}`}
+										>
+											{msg.content}
+										</div>
+										<p className="text-[0.64rem] text-on-surface-variant opacity-50 px-1">
+											{formatTime(msg.createdAt)}
+										</p>
 									</div>
-									<p className="text-[0.64rem] text-on-surface-variant opacity-50 px-1">
-										{formatTime(msg.createdAt)}
+								</div>
+							);
+						})}
+						{streamingMessage && (
+							<div className="flex gap-2.5 mb-2">
+								<div className="w-8 h-8 rounded-full text-[0.6rem] font-extrabold flex items-center justify-center shrink-0 mt-1 bg-surface-container-low text-on-surface-variant">
+									<Sparkle className="w-4 h-4" weight="fill" />
+								</div>
+								<div className="flex flex-col gap-1 max-w-[72%]">
+									<p className="text-[0.62rem] font-bold text-on-surface-variant opacity-60 px-1">
+										Sama AI
 									</p>
+									<div className="px-4 py-2.5 rounded-lg text-[0.84rem] leading-relaxed bg-surface-container border border-outline-variant rounded-tl-sm">
+										{streamingMessage}
+										<span className="inline-block w-1.5 h-3.5 bg-on-surface-variant opacity-60 animate-pulse ml-0.5 rounded-sm" />
+									</div>
 								</div>
 							</div>
-						);
-					})
+						)}
+						{isTyping && (
+							<div className="flex gap-2 items-center px-1 opacity-60">
+								<span className="text-[0.7rem] text-on-surface-variant">
+									{displayName} is typing…
+								</span>
+							</div>
+						)}
+					</>
 				)}
 				<div ref={bottomRef} />
 			</div>
@@ -396,7 +476,7 @@ function ChatPanel({
 					<textarea
 						ref={textareaRef}
 						rows={1}
-						className="flex-1 bg-transparent text-[0.84rem] text-on-surface placeholder:text-on-surface-variant placeholder:opacity-40 resize-none outline-none leading-relaxed min-h-[28px] max-h-28 py-0.5"
+						className="flex-1 bg-transparent text-[0.84rem] text-on-surface placeholder:text-on-surface-variant placeholder:opacity-40 resize-none outline-none leading-relaxed min-h-7 max-h-28 py-0.5"
 						placeholder="Share what's on your mind…"
 						value={input}
 						onChange={(e) => {
@@ -410,10 +490,11 @@ function ChatPanel({
 								handleSend();
 							}
 						}}
+						onInput={() => sendTyping()}
 					/>
 					<button
 						onClick={handleSend}
-						disabled={!input.trim() || sending}
+						disabled={!input.trim()}
 						className="p-2 rounded-sm bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-40 shrink-0"
 					>
 						<PaperPlaneTilt className="w-4 h-4" weight="fill" />
@@ -434,7 +515,7 @@ interface SessionThread {
 	unread?: number;
 }
 
-interface TherapistGroup {
+interface PersonGroup {
 	connection: Connection;
 	threads: SessionThread[];
 	totalUnread: number;
@@ -443,8 +524,12 @@ interface TherapistGroup {
 
 export default function SessionsPage() {
 	const { setTotalUnread } = useUnread();
+	const searchParams = useSearchParams();
+	const autoConnectionId = searchParams.get("connection");
 
-	const [groups, setGroups] = useState<TherapistGroup[]>([]);
+	const [role, setRole] = useState<string>("patient");
+	const { presenceMap } = usePresenceSocket();
+	const [groups, setGroups] = useState<PersonGroup[]>([]);
 	const [requestedConnections, setRequestedConnections] = useState<
 		Connection[]
 	>([]);
@@ -466,8 +551,12 @@ export default function SessionsPage() {
 		setLoading(true);
 		setError(null);
 		try {
+			const statusResult = await checkOnboardingStatus();
+			const activeRole = statusResult.role ?? "patient";
+			setRole(activeRole);
+
 			const [connResult, sessionResult] = await Promise.all([
-				getConnections("patient"),
+				getConnections(activeRole as "patient" | "therapist"),
 				getChatSessions(),
 			]);
 
@@ -490,7 +579,7 @@ export default function SessionsPage() {
 			const accepted = allConnections.filter((c) => c.status === "accepted");
 			const pending = allConnections.filter((c) => c.status === "pending");
 
-			const built: TherapistGroup[] = accepted.map((conn) => {
+			const built: PersonGroup[] = accepted.map((conn) => {
 				const sid = connSessionMap[conn.id] ?? conn.sessionId;
 				const threads: SessionThread[] = sid
 					? [
@@ -515,6 +604,16 @@ export default function SessionsPage() {
 			setGroups(built);
 			setRequestedConnections(pending);
 
+			// Auto-open connection from URL param (e.g. coming from Find Therapist)
+			if (autoConnectionId) {
+				const target = built.find((g) => g.connection.id === autoConnectionId);
+				if (target) {
+					const conn = target.connection;
+					setSelectedConnection(conn);
+					setSelectedSessionId(conn.sessionId);
+				}
+			}
+
 			// Update sidebar badge
 			const total = built.reduce((sum, g) => sum + g.totalUnread, 0);
 			setTotalUnread(total);
@@ -523,7 +622,7 @@ export default function SessionsPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [setTotalUnread]);
+	}, [setTotalUnread, autoConnectionId]);
 
 	useEffect(() => {
 		loadData();
@@ -593,7 +692,11 @@ export default function SessionsPage() {
 		if (activeFilter === "active" && g.threads.length === 0) return false;
 		if (activeFilter === "archived") return false; // placeholder
 		const q = search.toLowerCase();
-		return !q || g.connection.therapistName.toLowerCase().includes(q);
+		const displayName =
+			role === "therapist"
+				? (g.connection.patientName ?? "")
+				: (g.connection.therapistName ?? "");
+		return !q || displayName.toLowerCase().includes(q);
 	});
 
 	const showRequested = activeFilter === "all" || activeFilter === "requested";
@@ -630,12 +733,12 @@ export default function SessionsPage() {
 			!error &&
 			groups.length === 0 &&
 			requestedConnections.length === 0 ? (
-				<NoConnectionsEmpty />
+				<NoConnectionsEmpty role={role} />
 			) : (
 				<div className="flex flex-1 min-h-0 overflow-hidden">
 					{/* ── Left Panel: Conversation List ──────────────────────── */}
 					<div
-						className={`flex flex-col border-r border-outline-variant bg-[rgba(249,249,255,0.97)] w-[300px] shrink-0 h-full transition-all ${selectedSessionId ? "hidden md:flex" : "flex"}`}
+						className={`flex flex-col border-r border-outline-variant bg-[rgba(249,249,255,0.97)] w-75 shrink-0 h-full transition-all ${selectedSessionId ? "hidden md:flex" : "flex"}`}
 					>
 						{/* Panel header */}
 						<div className="shrink-0 px-4 pt-5 pb-3 border-b border-outline-variant">
@@ -684,8 +787,35 @@ export default function SessionsPage() {
 								<>
 									{filteredGroups.map((group) => {
 										const conn = group.connection;
-										const initials = getInitials(conn.therapistName);
-										const isOnline = conn.therapistStatus === "online";
+										const personName =
+											role === "therapist"
+												? (conn.patientName ?? "Patient")
+												: (conn.therapistName ?? "Therapist");
+										const personType =
+											role === "therapist" ? undefined : conn.therapistType;
+										const initials = getInitials(personName);
+										const otherUserId =
+											role === "therapist"
+												? conn.patientUserId
+												: conn.therapistUserId;
+										const presenceLive =
+											otherUserId != null
+												? presenceMap[otherUserId]
+												: undefined;
+										const connStatus: string =
+											presenceLive !== undefined
+												? presenceLive
+												: role === "therapist"
+													? (conn.patientStatus ?? "offline")
+													: (conn.therapistStatus ?? "offline");
+										const connDotClass =
+											connStatus === "online"
+												? "bg-emerald-500"
+												: connStatus === "busy"
+													? "bg-amber-400"
+													: connStatus === "unavailable"
+														? "bg-orange-400"
+														: "bg-slate-300";
 										const creating = creatingSession === conn.id;
 
 										return (
@@ -704,16 +834,19 @@ export default function SessionsPage() {
 														<div className="w-9 h-9 rounded-full bg-primary-container text-primary text-[0.65rem] font-extrabold flex items-center justify-center">
 															{initials}
 														</div>
-														{isOnline && (
-															<span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-white" />
-														)}
+														<span
+															className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ${connDotClass} border border-white`}
+														/>
 													</div>
 													<div className="flex-1 min-w-0">
 														<p className="text-[0.8rem] font-bold text-on-surface truncate leading-tight">
-															{conn.therapistName}
+															{personName}
 														</p>
 														<p className="text-[0.68rem] text-on-surface-variant opacity-60 truncate">
-															{conn.therapistType ?? "Therapist"}
+															{personType ??
+																(role === "therapist"
+																	? "Patient"
+																	: "Therapist")}
 														</p>
 													</div>
 													<div className="flex items-center gap-1.5 shrink-0">
@@ -805,10 +938,14 @@ export default function SessionsPage() {
 										);
 									})}
 
-									{/* Requested connections */}
+									{/* Pending connections */}
 									{showRequested &&
 										requestedConnections.map((conn) => {
-											const initials = getInitials(conn.therapistName);
+											const reqName =
+												role === "therapist"
+													? (conn.patientName ?? "Patient")
+													: (conn.therapistName ?? "Therapist");
+											const initials = getInitials(reqName);
 											return (
 												<div key={conn.id} className="mb-1">
 													<div className="mx-1 rounded-md border border-amber-200 bg-amber-50/60 p-3">
@@ -818,30 +955,63 @@ export default function SessionsPage() {
 															</div>
 															<div className="flex-1 min-w-0">
 																<p className="text-[0.78rem] font-bold text-on-surface truncate leading-tight">
-																	{conn.therapistName}
+																	{reqName}
 																</p>
 																<p className="text-[0.67rem] text-amber-700 font-semibold">
-																	Request Pending
+																	{role === "therapist"
+																		? "New Request"
+																		: "Request Pending"}
 																</p>
 															</div>
 														</div>
 														<div className="flex items-center gap-1.5 mb-2">
 															<span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
 															<p className="text-[0.7rem] text-on-surface-variant">
-																Awaiting therapist approval
+																{role === "therapist"
+																	? "Patient is requesting a session with you"
+																	: "Awaiting therapist approval"}
 															</p>
 														</div>
-														<div className="flex gap-2">
-															<button className="flex-1 py-1.5 text-[0.7rem] font-bold border border-outline-variant rounded-sm text-on-surface-variant hover:bg-surface-container transition-colors">
-																Cancel
-															</button>
-															<a
-																href={`/find-therapist?therapistId=${conn.therapistId}`}
-																className="flex-1 py-1.5 text-[0.7rem] font-bold bg-primary-container text-primary rounded-sm hover:bg-primary/10 transition-colors text-center"
-															>
-																View profile
-															</a>
-														</div>
+														{role === "therapist" ? (
+															<div className="flex gap-2">
+																<button
+																	onClick={async () => {
+																		await respondToConnection(
+																			conn.id,
+																			"rejected",
+																		);
+																		loadData();
+																	}}
+																	className="flex-1 py-1.5 text-[0.7rem] font-bold border border-outline-variant rounded-sm text-on-surface-variant hover:bg-surface-container transition-colors"
+																>
+																	Decline
+																</button>
+																<button
+																	onClick={async () => {
+																		await respondToConnection(
+																			conn.id,
+																			"accepted",
+																		);
+																		loadData();
+																	}}
+																	className="flex-1 py-1.5 text-[0.7rem] font-bold bg-primary text-white rounded-sm hover:bg-primary/90 transition-colors"
+																>
+																	Accept
+																</button>
+															</div>
+														) : (
+															<div className="flex gap-2">
+																<button className="flex-1 py-1.5 text-[0.7rem] font-bold border border-outline-variant rounded-sm text-on-surface-variant hover:bg-surface-container transition-colors">
+																	Cancel
+																</button>
+																<a
+																	href={`/find-therapist?therapistId=${conn.therapistId}`}
+																	className="flex-1 py-1.5 text-[0.7rem] font-bold bg-primary-container text-primary rounded-sm hover:bg-primary/10 transition-colors text-center"
+																>
+																	View profile
+																</a>
+															</div>
+														)}
 													</div>
 												</div>
 											);
@@ -879,6 +1049,8 @@ export default function SessionsPage() {
 								key={selectedSessionId}
 								connection={selectedConnection}
 								sessionId={selectedSessionId}
+								role={role}
+								presenceMap={presenceMap}
 								onClose={() => {
 									setSelectedSessionId(null);
 									setSelectedConnection(null);

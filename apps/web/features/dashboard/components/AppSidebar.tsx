@@ -6,10 +6,18 @@ import {
 } from "@/app/onboarding/actions";
 import { signOut, useSession } from "@/features/auth/api/client";
 import {
+	PresenceStatus,
+	usePresenceSocket,
+} from "@/features/chat/hooks/usePresenceSocket";
+import {
+	Bell,
 	CalendarBlank,
 	CaretLeft,
 	CaretRight,
+	ChartBar,
 	ChartLineUp,
+	Chats,
+	ClipboardText,
 	DotsThreeVertical,
 	FirstAid,
 	Gear,
@@ -17,6 +25,7 @@ import {
 	SignOut,
 	SquaresFour,
 	UserFocus,
+	Users,
 	Warning,
 } from "@phosphor-icons/react";
 import {
@@ -74,6 +83,27 @@ const navMain = [
 	},
 ];
 
+const navTherapist = [
+	{
+		title: "Workspace",
+		items: [
+			{ title: "Dashboard", url: "/overview", icon: SquaresFour },
+			{ title: "Patients", url: "/patients", icon: Users },
+			{ title: "Sessions", url: "/sessions", icon: CalendarBlank },
+			{ title: "Messages", url: "/messages", icon: Chats },
+			{ title: "Analytics", url: "/analytics", icon: ChartBar },
+		],
+	},
+	{
+		title: "Clinical",
+		items: [
+			{ title: "Notes", url: "/notes", icon: ClipboardText },
+			{ title: "Crisis Alerts", url: "/crisis-alerts", icon: Bell },
+			{ title: "Schedule", url: "/schedule", icon: CalendarBlank },
+		],
+	},
+];
+
 function formatNextSession(
 	date: string | Date | null | undefined,
 ): string | null {
@@ -127,6 +157,11 @@ export function AppSidebar() {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 
+	const { presenceMap, setStatus } = usePresenceSocket();
+	const myUserId = session?.user?.id;
+	const myStatus: PresenceStatus =
+		(myUserId ? presenceMap[myUserId] : undefined) ?? "online";
+
 	const userName = session?.user?.name ?? "…";
 	const userEmail = session?.user?.email;
 	const initials = session?.user?.name ? getInitials(session.user.name) : "…";
@@ -162,7 +197,7 @@ export function AppSidebar() {
 
 	const handleSignOut = async () => {
 		await signOut();
-		router.push("/sign-in");
+		router.push("/signin");
 	};
 
 	const acceptedConnections = connections.filter(
@@ -193,47 +228,50 @@ export function AppSidebar() {
 
 			<SidebarContent className="py-2 no-scrollbar overflow-x-hidden">
 				{/* Nav groups */}
-				{navMain.map((group, idx) => (
-					<React.Fragment key={group.title}>
-						<SidebarGroup>
-							<SidebarGroupLabel className="text-[0.58rem] font-bold tracking-[0.1em] uppercase text-on-surface-variant opacity-50 px-3">
-								{group.title}
-							</SidebarGroupLabel>
-							<SidebarGroupContent>
-								<SidebarMenu>
-									{group.items.map((item) => (
-										<SidebarMenuItem key={item.title}>
-											<SidebarMenuButton
-												asChild
-												isActive={pathname === item.url}
-												tooltip={item.title}
-												className="py-5 font-manrope hover:bg-surface-container-low hover:text-on-surface data-[active=true]:bg-surface-container-low data-[active=true]:text-primary data-[active=true]:font-bold text-on-surface-variant font-semibold text-[0.8rem]"
-											>
-												<Link href={item.url}>
-													<item.icon
-														weight={pathname === item.url ? "fill" : "regular"}
-														className="!size-4"
-													/>
-													<span>{item.title}</span>
-													{item.url === "/sessions" && totalUnread > 0 && (
-														<span className="ml-auto text-[0.6rem] font-extrabold bg-primary-container text-primary px-1.5 py-0.5 rounded-full group-data-[collapsible=icon]:hidden">
-															{totalUnread}
-														</span>
-													)}
-												</Link>
-											</SidebarMenuButton>
-										</SidebarMenuItem>
-									))}
-								</SidebarMenu>
-							</SidebarGroupContent>
-						</SidebarGroup>
-						{idx < navMain.length - 1 && (
-							<SidebarSeparator className="mx-3 my-1 bg-outline-variant" />
-						)}
-					</React.Fragment>
-				))}
-
-				{/* Connected therapists / patients */}
+				{(role === "therapist" ? navTherapist : navMain).map((group, idx) => {
+					const activeNav = role === "therapist" ? navTherapist : navMain;
+					return (
+						<React.Fragment key={group.title}>
+							<SidebarGroup>
+								<SidebarGroupLabel className="text-[0.58rem] font-bold tracking-[0.1em] uppercase text-on-surface-variant opacity-50 px-3">
+									{group.title}
+								</SidebarGroupLabel>
+								<SidebarGroupContent>
+									<SidebarMenu>
+										{group.items.map((item) => (
+											<SidebarMenuItem key={item.title}>
+												<SidebarMenuButton
+													asChild
+													isActive={pathname === item.url}
+													tooltip={item.title}
+													className="py-5 font-manrope hover:bg-surface-container-low hover:text-on-surface data-[active=true]:bg-surface-container-low data-[active=true]:text-primary data-[active=true]:font-bold text-on-surface-variant font-semibold text-[0.8rem]"
+												>
+													<Link href={item.url}>
+														<item.icon
+															weight={
+																pathname === item.url ? "fill" : "regular"
+															}
+															className="!size-4"
+														/>
+														<span>{item.title}</span>
+														{item.url === "/sessions" && totalUnread > 0 && (
+															<span className="ml-auto text-[0.6rem] font-extrabold bg-primary-container text-primary px-1.5 py-0.5 rounded-full group-data-[collapsible=icon]:hidden">
+																{totalUnread}
+															</span>
+														)}
+													</Link>
+												</SidebarMenuButton>
+											</SidebarMenuItem>
+										))}
+									</SidebarMenu>
+								</SidebarGroupContent>
+							</SidebarGroup>
+							{idx < activeNav.length - 1 && (
+								<SidebarSeparator className="mx-3 my-1 bg-outline-variant" />
+							)}
+						</React.Fragment>
+					);
+				})}
 				{acceptedConnections.length > 0 && (
 					<>
 						<SidebarSeparator className="mx-3 my-1 bg-outline-variant" />
@@ -307,20 +345,20 @@ export function AppSidebar() {
 
 			<SidebarFooter className="border-t border-outline-variant p-2 pb-8">
 				<SidebarMenu>
-					<SidebarMenuItem>
-						<SidebarMenuButton
-							tooltip="Emergency Support"
-							className="bg-on-surface hover:bg-on-surface/85 text-white hover:text-white rounded-sm font-manrope font-bold text-[0.75rem] py-5 mb-1
+					{role !== "therapist" && (
+						<SidebarMenuItem>
+							<SidebarMenuButton
+								tooltip="Emergency Support"
+								className="bg-on-surface hover:bg-on-surface/85 text-white hover:text-white rounded-sm font-manrope font-bold text-[0.75rem] py-5 mb-1
                 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:min-h-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:mb-1"
-						>
-							<Warning weight="fill" className="size-4 shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden">
-								Emergency Support
-							</span>
-						</SidebarMenuButton>
-					</SidebarMenuItem>
-
-					{/* Profile row with kebab menu */}
+							>
+								<Warning weight="fill" className="size-4 shrink-0" />
+								<span className="group-data-[collapsible=icon]:hidden">
+									Emergency Support
+								</span>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+					)}
 					<SidebarMenuItem>
 						<div ref={menuRef} className="relative w-full">
 							{/* Profile popup */}
@@ -338,7 +376,65 @@ export function AppSidebar() {
 												{userEmail}
 											</p>
 										)}
-									</div>
+									</div>{" "}
+									{role === "therapist" && (
+										<div className="border-b border-outline-variant">
+											<p className="px-3 pt-2 pb-1 text-[0.6rem] font-bold tracking-[0.08em] uppercase text-on-surface-variant opacity-50">
+												Status
+											</p>
+											{(
+												[
+													{
+														value: "online",
+														label: "Available",
+														dot: "bg-emerald-500",
+													},
+													{ value: "busy", label: "Busy", dot: "bg-amber-400" },
+													{
+														value: "unavailable",
+														label: "Appear Away",
+														dot: "bg-orange-400",
+													},
+													{
+														value: "offline",
+														label: "Appear Offline",
+														dot: "bg-slate-300",
+													},
+												] as {
+													value: PresenceStatus;
+													label: string;
+													dot: string;
+												}[]
+											).map((opt) => (
+												<button
+													key={opt.value}
+													onClick={() => {
+														setStatus(opt.value);
+														setMenuOpen(false);
+													}}
+													className={cn(
+														"w-full flex items-center gap-2.5 px-3 py-2 text-[0.78rem] font-semibold transition-colors",
+														myStatus === opt.value
+															? "bg-surface-container-low text-on-surface"
+															: "text-on-surface-variant hover:bg-surface-container-low",
+													)}
+												>
+													<span
+														className={cn(
+															"w-2 h-2 rounded-full shrink-0",
+															opt.dot,
+														)}
+													/>
+													{opt.label}
+													{myStatus === opt.value && (
+														<span className="ml-auto text-[0.6rem] font-bold text-primary">
+															✓
+														</span>
+													)}
+												</button>
+											))}
+										</div>
+									)}
 									<Link
 										href="/settings"
 										className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[0.78rem] text-on-surface-variant hover:bg-surface-container-low transition-colors font-semibold"
@@ -367,11 +463,27 @@ export function AppSidebar() {
 								}
 								className={`hover:bg-surface-container-low rounded-sm cursor-pointer ${sidebarState === "expanded" ? "border border-outline-variant hover:border-outline/50" : ""} group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:min-h-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:mx-auto`}
 							>
-								<div
-									className="w-[30px] h-[30px] rounded-sm bg-primary text-white flex items-center justify-center text-[0.62rem] font-extrabold shrink-0 group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:text-[0.5rem]"
-									suppressHydrationWarning
-								>
-									{initials}
+								<div className="relative shrink-0">
+									<div
+										className="w-[30px] h-[30px] rounded-sm bg-primary text-white flex items-center justify-center text-[0.62rem] font-extrabold group-data-[collapsible=icon]:size-4 group-data-[collapsible=icon]:text-[0.5rem]"
+										suppressHydrationWarning
+									>
+										{initials}
+									</div>
+									{role === "therapist" && (
+										<span
+											className={cn(
+												"absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white",
+												myStatus === "online"
+													? "bg-emerald-500"
+													: myStatus === "busy"
+														? "bg-amber-400"
+														: myStatus === "unavailable"
+															? "bg-orange-400"
+															: "bg-slate-300",
+											)}
+										/>
+									)}
 								</div>
 								<div className="flex flex-col flex-1 text-left min-w-0 group-data-[collapsible=icon]:hidden">
 									<span
