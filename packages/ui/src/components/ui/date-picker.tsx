@@ -1,6 +1,6 @@
 "use client"
+import { useState } from "react";
 
-import * as React from "react"
 import { format } from "date-fns"
 import { DayPicker } from "react-day-picker"
 import { CalendarIcon } from "lucide-react"
@@ -26,7 +26,7 @@ export function DatePicker({
   className,
   disabled,
 }: DatePickerProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = useState(false)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

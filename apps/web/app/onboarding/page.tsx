@@ -1,6 +1,6 @@
-"use client";
-
+"use client"
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 import { Heart, BriefcaseMetal, UsersThree } from "@phosphor-icons/react";
 import { OnboardingLayout } from "@/features/onboarding/components/OnboardingLayout";

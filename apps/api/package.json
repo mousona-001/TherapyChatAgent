@@ -11,10 +11,13 @@
     "start:prod": "node dist/main",
     "test:crisis": "ts-node scripts/test-crisis.ts",
     "test:optimize": "ts-node scripts/prompts/optimizer.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:purge": "ts-node scripts/purge-db.ts",
-    "seed:therapists": "ts-node scripts/seed-therapists.ts"
+    "seed:therapists": "ts-node scripts/seed-therapists.ts",
+    "seed:sessions": "ts-node scripts/seed-sessions.ts"
   },
   "keywords": [],
   "author": "",
@@ -54,11 +57,15 @@
     "socket.io": "^4.8.3",
     "twilio": "^5.13.1",
     "winston": "^3.19.0",
-    "winston-mongodb": "^7.0.1"
+    "winston-mongodb": "^7.0.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@nestjs/cli": "^11.0.17",
     "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@swc/cli": "^0.8.0",
+    "@swc/core": "^1.15.21",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",

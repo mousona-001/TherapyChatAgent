@@ -14,6 +14,7 @@ export type TherapistProfileData = {
   avatarUrl?: string;
   dateOfBirth?: string;
   gender?: string;
+  therapistType?: string;
   licenseNumber?: string;
   licenseType?: string;
   specializations?: string[];

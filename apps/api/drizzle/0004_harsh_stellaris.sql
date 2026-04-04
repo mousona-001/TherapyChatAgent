@@ -1,0 +1,1 @@
+ALTER TABLE "patient_profile" ADD COLUMN "status" text DEFAULT 'offline' NOT NULL;

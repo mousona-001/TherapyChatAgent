@@ -1,6 +1,6 @@
 "use client"
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
-import * as React from "react"
 import type { Value, Country } from "react-phone-number-input"
 import flags from "react-phone-number-input/flags"
 import { ChevronDown } from "lucide-react"
@@ -31,14 +31,39 @@ export function PhoneInput({
   disabled,
   defaultCountry = "IN"
 }: PhoneInputProps) {
-  const [defaultCountryCode, setDefaultCountryCode] = React.useState<Country>(defaultCountry);
-  const [PhoneInputWithCountry, setPhoneInputWithCountry] = React.useState<any>(null);
+  const [defaultCountryCode, setDefaultCountryCode] = useState<Country>(defaultCountry);
+  const [PhoneInputWithCountry, setPhoneInputWithCountry] = useState<React.ElementType | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     import("react-phone-number-input").then((mod) => {
       setPhoneInputWithCountry(() => mod.default);
     });
   }, []);
+
+  const customInputComponent = useMemo(() => {
+    return ({ value: inputValue, onChange: onInputChange, ref, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { value?: string, onChange?: (e: ChangeEvent<HTMLInputElement>) => void, ref?: React.Ref<HTMLInputElement> }) => {
+      const callingCode = getCountryCallingCode(defaultCountryCode);
+      const prefix = `+${callingCode}`;
+      
+      // Aggressively strip both international and national prefixes for display
+      let displayValue = (inputValue as string) || "";
+      if (displayValue.startsWith(prefix)) {
+        displayValue = displayValue.slice(prefix.length).trim();
+      }
+      if (defaultCountryCode === "IN" && displayValue.startsWith("0")) {
+        displayValue = displayValue.slice(1);
+      }
+
+      return (
+        <input
+          {...props}
+          ref={ref}
+          value={displayValue}
+          onChange={onInputChange}
+        />
+      );
+    };
+  }, [defaultCountryCode]);
 
   if (!PhoneInputWithCountry) {
     return (
@@ -137,49 +162,40 @@ export function PhoneInput({
         placeholder={placeholder}
         disabled={disabled}
         countrySelectComponent={CustomCountrySelect}
-        inputComponent={React.forwardRef(({ value, onChange, ...props }: any, ref) => {
-          const callingCode = getCountryCallingCode(defaultCountryCode);
-          const prefix = `+${callingCode}`;
-          
-          // Aggressively strip both international and national prefixes for display
-          let displayValue = value || "";
-          if (displayValue.startsWith(prefix)) {
-            displayValue = displayValue.slice(prefix.length).trim();
-          }
-          if (defaultCountryCode === "IN" && displayValue.startsWith("0")) {
-            displayValue = displayValue.slice(1);
-          }
-
-          return (
-            <input
-              {...props}
-              ref={ref}
-              value={displayValue}
-              onChange={onChange}
-            />
-          );
-        })}
+        inputComponent={customInputComponent}
       />
     </div>
   )
 }
 
-function CustomCountrySelect({ value, onChange, options, disabled }: any) {
-  const selectedOption = options.find((o: any) => o.value === value)
-  const callingCode = value ? getCountryCallingCode(value as Country) : ""
-  const FlagIcon = value ? flags[value as Country] : null
+interface CountrySelectOption {
+  value?: Country;
+  label: string;
+}
+
+interface CustomCountrySelectProps {
+  value?: Country;
+  onChange: (value?: Country) => void;
+  options: CountrySelectOption[];
+  disabled?: boolean;
+}
+
+function CustomCountrySelect({ value, onChange, options, disabled }: CustomCountrySelectProps) {
+  const selectedOption = options.find((o) => o.value === value)
+  const callingCode = value ? getCountryCallingCode(value) : ""
+  const FlagIcon = value ? flags[value] : null
 
   return (
     <div className="PhoneInputCountry">
       <select
         className="PhoneInputCountrySelect"
-        value={value}
-        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => onChange(event.target.value || undefined)}
+        value={value || ""}
+        onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange((event.target.value as Country) || undefined)}
         disabled={disabled}
       >
-        {options.map((option: any) => (
-          <option key={option.value || "ZZ"} value={option.value}>
-            {option.label} {option.value && `+${getCountryCallingCode(option.value as Country)}`}
+        {options.map((option) => (
+          <option key={option.value || "ZZ"} value={option.value || ""}>
+            {option.label} {option.value && `+${getCountryCallingCode(option.value)}`}
           </option>
         ))}
       </select>
@@ -187,7 +203,7 @@ function CustomCountrySelect({ value, onChange, options, disabled }: any) {
       {/* Visual representation */}
       {FlagIcon && (
         <div className="PhoneInputCountryIcon">
-          <FlagIcon title={selectedOption?.label} />
+          <FlagIcon title={selectedOption?.label || ""} />
         </div>
       )}
       

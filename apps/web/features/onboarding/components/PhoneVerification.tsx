@@ -1,6 +1,6 @@
-"use client";
+"use client"
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { Phone, ArrowClockwise } from "@phosphor-icons/react";
 import { PhoneInput, isValidPhoneNumber, Input, toast, Button } from "@repo/ui";
 

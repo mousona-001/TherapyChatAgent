@@ -35,7 +35,7 @@ export function useSignUp() {
     }
 
     try {
-      const { data, error: signUpError } = await signUp.email({
+      const { error: signUpError } = await signUp.email({
         email,
         password,
         name: email.split("@")[0], // Default name from email, users will fill proper name in onboarding
@@ -44,11 +44,11 @@ export function useSignUp() {
       if (signUpError) {
         setError(signUpError.message || "Failed to create account. Please try again.");
       } else {
-        router.push("/onboarding");
+        router.push("/overview");
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +64,8 @@ export function useSignUp() {
         provider: "google",
         callbackURL: "/onboarding",
       });
-    } catch (err: any) {
-      setError(err?.message || "Failed to sign up with Google");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign up with Google");
     }
   };
 

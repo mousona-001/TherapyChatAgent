@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sama – Find Your Therapist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/phosphor.min.js"></script>
+    <style>
+        :root {
+            --surface: #f9f9ff;
+            --surface-container-low: #f0f3ff;
+            --surface-container: #e7eeff;
+            --surface-container-lowest: #ffffff;
+            --primary: #6366F1;
+            --primary-container: #dfe0ff;
+            --on-primary: #ffffff;
+            --on-surface: #003265;
+            --on-surface-variant: #3b6095;
+            --outline-variant: rgba(144, 179, 238, 0.18);
+            --shadow: 0 10px 30px -10px rgba(0, 50, 101, 0.08);
+            --shadow-md: 0 4px 20px -4px rgba(0, 50, 101, 0.13);
+            --r-sm: 0.25rem;
+            --r-md: 0.5rem;
+            --sw: 240px;
+            /* sidebar open width  */
+            --sc: 60px;
+            /* sidebar closed width */
+            --nh: 56px;
+            /* nav height */
+            --ease: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Manrope", sans-serif;
+            background: var(--surface);
+            color: var(--on-surface);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ══════════ NAV ══════════ */
+        nav {
+            height: var(--nh);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(249, 249, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--outline-variant);
+            position: relative;
+            z-index: 40;
+            flex-shrink: 0;
+            padding-right: 1rem;
+        }
+
+        /* Left section — aligns with sidebar, animates width */
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0 1rem;
+            height: 100%;
+            width: var(--sw);
+            min-width: var(--sc);
+            border-right: 1px solid var(--outline-variant);
+            transition: width var(--ease);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .nav-logo {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--r-sm);
+            flex-shrink: 0;
+            object-fit: contain;
+        }
+
+        .nav-brand {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+            transition: opacity var(--ease), max-width var(--ease);
+            max-width: 200px;
+            overflow: hidden;
+        }
+
+        /* collapsed state handled via JS class on body */
+        body.sb-collapsed .nav-left {
+            width: var(--sc);
+        }
+
+        body.sb-collapsed .nav-brand {
+            opacity: 0;
+            max-width: 0;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-sm);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--on-surface-variant);
+            cursor: pointer;
+            border: none;
+            font-size: 1.05rem;
+            transition: background 0.15s;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            background: var(--surface-container-low);
+        }
+
+        .notif-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 1.5px solid white;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+
+        /* ══════════ APP SHELL ══════════ */
+        .app-shell {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ══════════ SIDEBAR ══════════ */
+        .sidebar {
+            width: var(--sw);
+            flex-shrink: 0;
+            background: var(--surface-container-lowest);
+            border-right: 1px solid var(--outline-variant);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: width var(--ease);
+            position: relative;
+        }
+
+        body.sb-collapsed .sidebar {
+            width: var(--sc);
+        }
+
+        /* ── toggle pill button ── */
+        .sb-toggle {
+            position: absolute;
+            top: 1rem;
+            right: -13px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--surface-container-lowest);
+            border: 1px solid var(--outline-variant);
+            box-shadow: 0 1px 6px rgba(0, 50, 101, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            color: var(--on-surface-variant);
+            font-size: 0.8rem;
+            transition: background 0.15s;
+        }
+
+        .sb-toggle:hover {
+            background: var(--surface-container-low);
+        }
+
+        /* ── sidebar nav groups ── */
+        .sb-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.75rem 0;
+        }
+
+        .sb-group {
+            padding: 0.5rem 0 0.25rem;
+        }
+
+        .sb-group-label {
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            opacity: 0.5;
+            padding: 0 0.85rem;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            display: block;
+            transition: opacity var(--ease);
+        }
+
+        body.sb-collapsed .sb-group-label {
+            opacity: 0;
+        }
+
+        .sb-sep {
+            height: 1px;
+            background: var(--outline-variant);
+            margin: 0.35rem 0.75rem;
+        }
+
+        body.sb-collapsed .sb-sep {
+            margin: 0.35rem 0.5rem;
+        }
+
+        /* ── sidebar item ── */
+        .sb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.5rem 0.85rem;
+            border-radius: var(--r-sm);
+            margin: 0.05rem 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--on-surface-variant);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: "Manrope", sans-serif;
+            text-align: left;
+            width: calc(100% - 1rem);
+            white-space: nowrap;
+            transition: background 0.12s, color 0.12s;
+            position: relative;
+        }
+
+        .sb-item:hover {
+            background: var(--surface-container-low);
+            color: var(--on-surface);
+        }
+
+        .sb-item.active {
+            background: var(--surface-container-low);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* icon: always shown, never hidden */
+        .sb-icon {
+            font-size: 1.05rem;
+            flex-shrink: 0;
+            width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* label: hidden when collapsed */
+        .sb-label {
+            flex: 1;
+            transition: opacity var(--ease), width var(--ease);
+            overflow: hidden;
+        }
+
+        body.sb-collapsed .sb-label {
+            opacity: 0;
+            width: 0;
+        }
+
+        /* badge: stays visible on collapse, moves to icon column */
+        .sb-badge {
+            font-size: 0.6rem;
+            font-weight: 800;
+            background: var(--primary-container);
+            color: var(--primary);
+            padding: 0.08rem 0.4rem;
+            border-radius: 999px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: opacity var(--ease);
+        }
+
+        /* when collapsed, center item and keep badge tight to icon */
+        body.sb-collapsed .sb-item {
+            padding: 0.55rem 0;
+            gap: 0.3rem;
+            margin: 0.05rem auto;
+            width: calc(var(--sc) - 0.5rem);
+            justify-content: center;
+        }
+
+        /* ── sidebar footer ── */
+        .sb-footer {
+            border-top: 1px solid var(--outline-variant);
+            padding: 0.75rem 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .btn-emergency {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.55rem 0.75rem;
+            border-radius: var(--r-sm);
+            background: var(--on-surface);
+            color: white;
+            font-family: "Manrope", sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: opacity 0.15s;
+        }
+
+        .btn-emergency:hover {
+            opacity: 0.85;
+        }
+
+        .btn-emergency .sb-icon {
+            color: white;
+        }
+
+        .emergency-label {
+            transition: opacity var(--ease), width var(--ease);
+        }
+
+        body.sb-collapsed .emergency-label {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        body.sb-collapsed .btn-emergency {
+            padding: 0.55rem 0;
+            gap: 0;
+            justify-content: center;
+        }
+
+        /* ── user row ── */
+        .sb-user {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.45rem 0.5rem;
+            border-radius: var(--r-sm);
+            cursor: pointer;
+            position: relative;
+            transition: background 0.15s;
+            overflow: hidden;
+        }
+
+        .sb-user:hover {
+            background: var(--surface-container-low);
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--r-sm);
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.62rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+            transition: opacity var(--ease), width var(--ease);
+            overflow: hidden;
+        }
+
+        .user-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--on-surface);
+            white-space: nowrap;
+        }
+
+        .user-role-text {
+            font-size: 0.6rem;
+            color: var(--on-surface-variant);
+        }
+
+        .user-more {
+            color: var(--on-surface-variant);
+            font-size: 1rem;
+            opacity: 0.45;
+            flex-shrink: 0;
+            transition: opacity var(--ease);
+        }
+
+        body.sb-collapsed .user-info {
+            opacity: 0;
+            width: 0;
+        }
+
+        body.sb-collapsed .user-more {
+            opacity: 0;
+            width: 0;
+        }
+
+        body.sb-collapsed .sb-user {
+            justify-content: center;
+            padding: 0.45rem 0;
+            gap: 0;
+        }
+
+        /* ── logout popup ── */
+        .logout-popup {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0.5rem;
+            right: 0.5rem;
+            background: var(--surface-container-lowest);
+            border: 1px solid var(--outline-variant);
+            border-radius: var(--r-md);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            display: none;
+            z-index: 100;
+        }
+
+        .logout-popup.visible {
+            display: block;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: "Manrope", sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9e3f4e;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .logout-btn:hover {
+            background: var(--surface-container-low);
+        }
+
+        .logout-btn i {
+            font-size: 1rem;
+        }
+
+        /* ══════════ MAIN PAGE ══════════ */
+        .page {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Sticky page header */
+        .page-header {
+            flex-shrink: 0;
+            padding: 1.5rem 2rem 1.25rem;
+            border-bottom: 1px solid var(--outline-variant);
+            background: rgba(249, 249, 255, 0.96);
+        }
+
+        .page-title {
+            font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--on-surface);
+        }
+
+        .page-sub {
+            font-size: 0.84rem;
+            color: var(--on-surface-variant);
+            margin-top: 0.3rem;
+        }
+
+        /* Scrollable body */
+        .page-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.75rem 2rem 3rem;
+        }
+
+        /* ══════════ SEARCH BAR ══════════ */
+        .search-bar {
+            background: var(--surface-container-lowest);
+            border-radius: var(--r-md);
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .search-wrap {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.65rem 0.85rem 0.65rem 2.4rem;
+            font-family: "Manrope", sans-serif;
+            font-size: 0.85rem;
+            color: var(--on-surface);
+            background: var(--surface-container-low);
+            border: none;
+            border-radius: var(--r-sm);
+            border-bottom: 2px solid transparent;
+            outline: none;
+            transition: background 0.18s, border-color 0.18s;
+        }
+
+        .search-input:focus {
+            background: var(--surface-container-lowest);
+            border-bottom-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .search-input::placeholder {
+            color: var(--on-surface-variant);
+            opacity: 0.55;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--on-surface-variant);
+            opacity: 0.5;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .chip {
+            font-family: "Manrope", sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.28rem 0.7rem;
+            border-radius: var(--r-sm);
+            border: none;
+            cursor: pointer;
+            background: var(--surface-container-low);
+            color: var(--on-surface-variant);
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .chip.active {
+            background: var(--on-surface);
+            color: white;
+        }
+
+        .chip.ai {
+            background: var(--primary-container);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .chip.ai i {
+            font-size: 0.8rem;
+        }
+
+        /* ══════════ SECTION LABEL ══════════ */
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--on-surface-variant);
+            margin-bottom: 0.85rem;
+        }
+
+        .section-label i {
+            opacity: 0.55;
+            font-size: 0.95rem;
+        }
+
+        /* ══════════ THERAPIST CARDS — 2-col grid ══════════ */
+        .therapist-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .therapist-card {
+            background: var(--surface-container-lowest);
+            border-radius: var(--r-md);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            position: relative;
+            cursor: pointer;
+            transition: box-shadow 0.18s, transform 0.18s;
+        }
+
+        .therapist-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        /* Match badge — top-right pill */
+        .match-badge {
+            position: absolute;
+            top: 0;
+            right: 1rem;
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: var(--on-surface);
+            color: white;
+            padding: 0.22rem 0.6rem;
+            border-radius: 0 0 var(--r-sm) var(--r-sm);
+        }
+
+        /* Card top row */
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            padding-top: 0.35rem;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .avatar-init {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--r-md);
+            background: var(--primary-container);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.01em;
+        }
+
+        .online-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #2dbe7a;
+            border: 2px solid white;
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+        }
+
+        .t-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t-name {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--on-surface);
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+            margin-bottom: 0.15rem;
+        }
+
+        .t-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: var(--on-surface-variant);
+            margin-bottom: 0.25rem;
+        }
+
+        .star {
+            color: #f5a623;
+        }
+
+        .t-role {
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        /* Tags */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .tag {
+            font-size: 0.67rem;
+            font-weight: 600;
+            padding: 0.22rem 0.6rem;
+            border-radius: var(--r-sm);
+            background: var(--surface-container-low);
+            color: var(--on-surface-variant);
+        }
+
+        /* Bio */
+        .t-bio {
+            font-size: 0.78rem;
+            color: var(--on-surface-variant);
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Footer */
+        .card-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.65rem;
+            border-top: 1px solid var(--surface-container);
+        }
+
+        .next-slot {
+            font-size: 0.73rem;
+            color: var(--on-surface-variant);
+            font-weight: 500;
+        }
+
+        .next-slot strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .btn-book {
+            font-family: "Manrope", sans-serif;
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: white;
+            background: var(--on-surface);
+            border: none;
+            border-radius: var(--r-sm);
+            padding: 0.45rem 1rem;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .btn-book:hover {
+            opacity: 0.8;
+        }
+
+        /* ══════════ AI CARD ══════════ */
+        .ai-card {
+            background: var(--primary-container);
+            border-radius: var(--r-md);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            box-shadow: var(--shadow);
+            margin-top: 0.85rem;
+        }
+
+        .ai-content {
+            flex: 1;
+        }
+
+        .ai-eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--on-surface);
+            line-height: 1.2;
+            margin-bottom: 0.45rem;
+        }
+
+        .ai-sub {
+            font-size: 0.78rem;
+            color: var(--on-surface-variant);
+            line-height: 1.6;
+            margin-bottom: 0.9rem;
+        }
+
+        .btn-ai {
+            font-family: "Manrope", sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: var(--r-sm);
+            padding: 0.55rem 1.1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 4px 16px -4px rgba(73, 75, 214, 0.35);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .btn-ai:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .ai-orb {
+            width: 90px;
+            height: 90px;
+            border-radius: var(--r-md);
+            background: var(--surface-container-lowest);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ai-orb-inner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.35rem;
+            box-shadow: 0 0 0 9px var(--primary-container);
+        }
+
+        @media (max-width: 680px) {
+            .therapist-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── NAV ── -->
+    <nav>
+        <div class="nav-left" id="navLeft">
+            <img class="nav-logo"
+                src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCI+CjxwYXRoIGQ9Ik0wIDAgQzMzNy45MiAwIDY3NS44NCAwIDEwMjQgMCBDMTAyNCAzMzcuOTIgMTAyNCA2NzUuODQgMTAyNCAxMDI0IEM2ODYuMDggMTAyNCAzNDguMTYgMTAyNCAwIDEwMjQgQzAgNjg2LjA4IDAgMzQ4LjE2IDAgMCBaICIgZmlsbD0iI0ZERkVGRSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCwwKSIvPgo8cGF0aCBkPSJNMCAwIEMxLjMzNzk4ODQ4IDAuMzczMDgzMzcgMi42NzY1NTM4OCAwLjc0NDEwMjU3IDQuMDE1NjI1IDEuMTEzMjgxMjUgQzEyLjM5NTYzMDQ4IDMuNDY1NjE1MTggMjAuMTY5NTA4NTggNi4xNjIyODM5MSAyOCAxMCBDMjkuNTA4OTU3MTcgMTAuNjg1NTEzNDUgMzEuMDE5NTM0NDIgMTEuMzY3NDY2MTIgMzIuNTMxMjUgMTIuMDQ2ODc1IEM1MC41MjMyMzkyOSAyMC4yMjg2NTUwMiA2Ny4xNjE2Nzg4NCAzMC40NTcxNjA2NSA4My4zNDM3NSA0MS43NjU2MjUgQzEwOS41OTE1Mzg5NSA2MC4wNzE4OTgyOCAxMzYuNDE5MDA1MzYgNzguMzI0MjQ0NDQgMTY2LjY4NzUgODkuMzEyNSBDMTY3LjMxNTc1Njg0IDg5LjU0MzE2MTYyIDE2Ny45NDQwMTM2NyA4OS43NzM4MjMyNCAxNjguNTkxMzA4NTkgOTAuMDExNDc0NjEgQzE4MC42MDQ0MTI0NyA5NC4xNjcwMzcyNCAxOTIuNTYwNjU2NDIgOTUuNTg0NTczODggMjA1LjE4NzUgOTUuNSBDMjA1LjkwOTg4ODYxIDk1LjQ5NzkwNTI3IDIwNi42MzIyNzcyMiA5NS40OTU4MTA1NSAyMDcuMzc2NTU2NCA5NS40OTM2NTIzNCBDMjE5LjIyNTkwOSA5NS40MjMwMzE5NCAyMjkuODY0NjI3MzYgOTQuMTg4MDE3NTcgMjQxIDkwIEMyNDEuODIyNDIxODcgODkuNzA1Mjg4MDkgMjQyLjY0NDg0Mzc1IDg5LjQxMDU3NjE3IDI0My40OTIxODc1IDg5LjEwNjkzMzU5IEMyNjMuMzA5MjE2NDUgODEuOTU0NTAzNjYgMjgwLjcxMjQ5OTA3IDcxLjMzNDc5NjA4IDI5NyA1OCBDMjk3IDYyLjAwNTExMjI0IDI5NS4wNzA0Njg0NCA2My45Mjk5NDcxOCAyOTIuNjg3NSA2Ni45Mzc1IEMyOTIuMjM5NjMxMzUgNjcuNTEwMTY2MDIgMjkxLjc5MTc2MjcgNjguMDgyODMyMDMgMjkxLjMzMDMyMjI3IDY4LjY3Mjg1MTU2IEMyODYuNTIyNzEyNDkgNzQuNzM2MzIzMzUgMjgxLjMzMjgyNDc4IDgwLjM5ODk1NjIyIDI3NiA4NiBDMjc1LjI3Mjk2ODc1IDg2Ljc5MTQ4NDM3IDI3NC41NDU5Mzc1IDg3LjU4Mjk2ODc1IDI3My43OTY4NzUgODguMzk4NDM3NSBDMjU4Ljc1MTUxMTkzIDEwNC4yNzk2NTQwNyAyMzcuODU4NzMwOTUgMTE1LjAwODgyNjIzIDIxNyAxMjEgQzIxNS44MzU5NzY1NiAxMjEuMzM5MDIzNDQgMjE0LjY3MTk1MzEzIDEyMS42NzgwNDY4OCAyMTMuNDcyNjU2MjUgMTIyLjAyNzM0Mzc1IEMxNjguNzkyNDkzODkgMTMyLjU1NDU5MTU2IDEyNy4yMjY4NjE4MiAxMTMuOTc5ODMwMiA5MCA5MSBDODQuMjA3NzYxMiA4Ny4zODk4NjE0OSA3OC40OTUzOTgyMSA4My43NDAzNTYxOCA3MyA3OS42ODc1IEM0NS45NDMxNzYxOSA2MC4wODQ2NjI5MSAxNi42MjAzMDAyMSAzOS4zMjUxNTUzMSAtMTUuOTk0NDE1MjggMzAuNTQ2MzI1NjggQy0xNy44ODk4Mjc4MSAzMC4wMzAwMTExNSAtMTkuNzc3NzQ0OTggMjkuNDg2NDA1NTQgLTIxLjY2NTAzOTA2IDI4Ljk0MTE2MjExIEMtMzEuMzY2NzU5MTYgMjYuMjgwNjI5ODIgLTQwLjI3Njg1NTg5IDI1LjM1MDI3NTY3IC01MC4zMTI1IDI1LjUgQy01MS4zODE2MTExOCAyNS41MDY4MTI5IC01MS4zODE2MTExOCAyNS41MDY4MTI5IC01Mi40NzIzMjA1NiAyNS41MTM3NjM0MyBDLTY2LjI2NTI5NTIyIDI1LjYxNjUyNzczIC03OS41NjUyNTU3NSAyNi41NzgwNTA1NCAtOTIgMzMgQy05My4xNTUgMzMuMjQ3NSAtOTQuMzEgMzMuNDk1IC05NS41IDMzLjc1IEMtMTExLjY0OTcyMDUxIDM3LjU0OTkzNDI0IC0xMjcuMzM5NjU3MzYgNDkuNjQxNDU0NDYgLTEzOSA2MSBDLTEzOS42NiA2MC42NyAtMTQwLjMyIDYwLjM0IC0xNDEgNjAgQy0xMzUuMTc4NTg3MDcgNTEuMDE3OTcxNDcgLTEyOC44Mzg1NTU0OCA0My4xMTk4NDgyNSAtMTIxLjM5MzA2NjQxIDM1LjQ0NDMzNTk0IEMtMTIwLjE2NDMzMjU1IDM0LjE3MDM4MDU0IC0xMTguOTYwOTQxMTcgMzIuODcyMDg2MjMgLTExNy43NjE3MTg3NSAzMS41NzAzMTI1IEMtMTAzLjUwMDQ3MjI1IDE2LjQ3NjQ4ODUyIC04NC43MDM5OTUxOCA2LjA5NTk5ODUxIC02NSAwIEMtNjQuMDM0NDkyMTkgLTAuMzA2Nzk2ODcgLTYzLjA2ODk4NDM4IC0wLjYxMzU5Mzc1IC02Mi4wNzQyMTg3NSAtMC45Mjk2ODc1IEMtNDIuODM3NDU4MjEgLTYuNjQzNTc2NzcgLTE5LjEwMDcyNzQ2IC01LjY5NzA3MTY0IDAgMCBaICIgZmlsbD0iIzM5NDE4QiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDMzLDQ1NSkiLz4KPHBhdGggZD0iTTAgMCBDMi41NjQ1MjI2MyAwLjAxMDg3NzEgNS4xMjgzNjc0NCAtMC4wMDAwNDU1MSA3LjY5Mjg3MTA5IC0wLjAxMjY5NTMxIEM5LjM0MDAwODA0IC0wLjAxMTM3NjA1IDEwLjk4NzE0NDU3IC0wLjAwODgxODUxIDEyLjYzNDI3NzM0IC0wLjAwNDg4MjgxIEMxMy4zOTI2MTg3MSAtMC4wMDg5MzEyNyAxNC4xNTA5NjAwOCAtMC4wMTI5Nzk3NCAxNC45MzIyODE0OSAtMC4wMTcxNTA4OCBDMTkuMDc0MTY4MDggMC4wMTk1MjMyIDIyLjE1NzY5OTAxIDAuNTI5ODcxODIgMjUuOTA3NzE0ODQgMi4yNjA3NDIxOSBDMjcuMzMxNzExMDQgMi42MDE4MjIwMyAyOC43NjY1MDU2NyAyLjkwMDc4NTI4IDMwLjIwODQ5NjA5IDMuMTU1MjczNDQgQzMxLjAxMjU0ODgzIDMuMzAzMjczOTMgMzEuODE2NjAxNTYgMy40NTEyNzQ0MSAzMi42NDUwMTk1MyAzLjYwMzc1OTc3IEMzMy40OTQ4MzM5OCAzLjc1ODY4ODk2IDM0LjM0NDY0ODQ0IDMuOTEzNjE4MTYgMzUuMjIwMjE0ODQgNC4wNzMyNDIxOSBDODEuMTkxNjkyNjMgMTIuOTM2MDY4ODYgMTIxLjcyNjk5OTc4IDQwLjI3MjIyNDEzIDE0OC4zMTAwNTg1OSA3OC42OTQzMzU5NCBDMTUzLjk5NjY3MjU2IDg3LjEzODM1MDkyIDE1OC42MzMyOTYwNyA5Ni4wMzM2OTEyNyAxNjIuOTA3NzE0ODQgMTA1LjI2MDc0MjE5IEMxNjMuMjUyMjE2OCAxMDUuOTk0MjE4NzUgMTYzLjU5NjcxODc1IDEwNi43Mjc2OTUzMSAxNjMuOTUxNjYwMTYgMTA3LjQ4MzM5ODQ0IEMxNjkuNjUyMzQyOTYgMTE5Ljc1ODU1MjkxIDE3My4zMjM0MzYyNCAxMzEuOTg4NzY4NzQgMTc1LjkwNzcxNDg0IDE0NS4yNjA3NDIxOSBDMTc2LjA3MTQyNTc4IDE0Ni4wNzA5MTc5NyAxNzYuMjM1MTM2NzIgMTQ2Ljg4MTA5Mzc1IDE3Ni40MDM4MDg1OSAxNDcuNzE1ODIwMzEgQzE3OS4xNTcwNzM3NiAxNjEuNzIxMDY1ODUgMTgyLjcxOTg0OTI1IDE4MS41NTU2NjA1NiAxNzcuOTA3NzE0ODQgMTk1LjI2MDc0MjE5IEMxNzUuOTExNjIxMDkgMTk2LjUyNjM2NzE5IDE3NS45MTE2MjEwOSAxOTYuNTI2MzY3MTkgMTczLjQ3MDIxNDg0IDE5Ny41MTA3NDIxOSBDMTcyLjY2NzEyODkxIDE5Ny44NDU4OTg0NCAxNzEuODY0MDQyOTcgMTk4LjE4MTA1NDY5IDE3MS4wMzY2MjEwOSAxOTguNTI2MzY3MTkgQzE2OC45MDc3MTQ4NCAxOTkuMjYwNzQyMTkgMTY4LjkwNzcxNDg0IDE5OS4yNjA3NDIxOSAxNjYuOTA3NzE0ODQgMTk5LjI2MDc0MjE5IEMxNjYuOTE4MTg4NDggMTk4LjIxMzIxNzc3IDE2Ni45Mjg2NjIxMSAxOTcuMTY1NjkzMzYgMTY2LjkzOTQ1MzEyIDE5Ni4wODY0MjU3OCBDMTY2Ljk3NjE1NjY4IDE5Mi4xMzE1NDYzNyAxNjYuOTk4Nzk0ODcgMTg4LjE3NjY4MTM4IDE2Ny4wMTc1NzgxMiAxODQuMjIxNjc5NjkgQzE2Ny4wMjc1MjI3IDE4Mi41MjI3NjA1NSAxNjcuMDQxMDgzMTYgMTgwLjgyMzg1OCAxNjcuMDU4NTkzNzUgMTc5LjEyNSBDMTY3LjE5NTk3MTk4IDE2NS40MzU2NjM3NSAxNjYuMzU2MDI3NTcgMTUyLjQzNTE1MTM2IDE2Mi43ODI3MTQ4NCAxMzkuMTM1NzQyMTkgQzE2Mi41NzAyNjEyMyAxMzguMzQ0MjU3ODEgMTYyLjM1NzgwNzYyIDEzNy41NTI3NzM0NCAxNjIuMTM4OTE2MDIgMTM2LjczNzMwNDY5IEMxNTQuMjc3MjQ3NjEgMTA4LjY3Njg1NjU1IDE0MC4wOTIzODIyNyA4NC4xMzU0ODM3MiAxMTkuOTA3NzE0ODQgNjMuMjYwNzQyMTkgQzExOS4wMjM0MTc5NyA2Mi4zMjQ4ODI4MSAxMTguMTM5MTIxMDkgNjEuMzg5MDIzNDQgMTE3LjIyODAyNzM0IDYwLjQyNDgwNDY5IEM4OC42Mjk2MTYzNCAzMC44MzE2NjYzNCA0NS45MjU1NDg4NSAxMi45NjY4NzA1MiA0LjkwMzgwODU5IDEyLjA1NzYxNzE5IEMtMTguMzM4NTA1MjggMTEuODE0NzE0MDggLTM3LjkyMTg5MjE5IDE1LjIxNDg4OTI3IC02MC4wOTIyODUxNiAyMi4yNjA3NDIxOSBDLTYxLjMwNjU4MjAzIDIyLjYzODQzNzUgLTYyLjUyMDg3ODkxIDIzLjAxNjEzMjgxIC02My43NzE5NzI2NiAyMy40MDUyNzM0NCBDLTEwMi41NjQxMjMwOSAzNi44NTY1Nzc1NSAtMTM0LjUxMTM5OTIzIDcwLjU1NTQyOTMyIC0xNTMuMDkyMjg1MTYgMTA2LjI2MDc0MjE5IEMtMTUzLjY3MDAxMjM0IDEwNy45MDEyOTIzNyAtMTU0LjIzNDgwMjU0IDEwOS41NDY1MjU2NCAtMTU0Ljc3OTc4NTE2IDExMS4xOTgyNDIxOSBDLTE1Ni45ODcxMTI5MSAxMTYuNjMwMDk5NDEgLTE2Mi4yMjk0Mjc5OSAxMTguNTg2MDAwNiAtMTY3LjE5Mzg0NzY2IDEyMS4wNDU4OTg0NCBDLTE3MC4wOTIyODUxNiAxMjIuMjYwNzQyMTkgLTE3MC4wOTIyODUxNiAxMjIuMjYwNzQyMTkgLTE3Mi4wOTIyODUxNiAxMjIuMjYwNzQyMTkgQy0xNjYuODY1NzU3MDcgMTA1LjQ1OTk1NTU0IC0xNTguNjkxMTQzMTggODkuMzEwNzQ3OTEgLTE0OC4wOTIyODUxNiA3NS4yNjA3NDIxOSBDLTE0Ny4zNzc4MjIyNyA3NC4zMDk0MTQwNiAtMTQ3LjM3NzgyMjI3IDc0LjMwOTQxNDA2IC0xNDYuNjQ4OTI1NzggNzMuMzM4ODY3MTkgQy0xMTYuNDU5NTgxMjQgMzMuNjU5MjExMjQgLTc0LjM2OTk2NTY1IDguNjAyODYyMTcgLTI1LjA1NzEyODkxIDEuMTEyMzA0NjkgQy0xNi43MDY1OTA3IDAuMDYxNDg2NCAtOC40MDgxNTY1MyAtMC4wNDI1MjMyNiAwIDAgWiAiIGZpbGw9IiMzQzQzOEIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUxMy4wOTIyODUxNTYyNSwzMzEuNzM5MjU3ODEyNSkiLz4KPHBhdGggZD0iTTAgMCBDLTAuMDE1NzEwNDUgMS4zMzYyMzQxMyAtMC4wMTU3MTA0NSAxLjMzNjIzNDEzIC0wLjAzMTczODI4IDIuNjk5NDYyODkgQy0wLjA2NjMyMTgzIDYuMDgyMzAyOTggLTAuMDkxMTM3NzcgOS40NjQ5NDg3NCAtMC4xMDk4NjMyOCAxMi44NDc5MDAzOSBDLTAuMTE5NzcxMDggMTQuMjk3NDc1MjggLTAuMTMzMzAxMTQgMTUuNzQ3MDMxMDMgLTAuMTUwODc4OTEgMTcuMTk2NTMzMiBDLTAuMzMwMjkwMDMgMzIuMzk4OTg3NyAxLjI0NDQ2NDA5IDQ2LjQ1MDUzNTEyIDYgNjEgQzYuMjQzNzkzOTUgNjEuNzU5NzQxMjEgNi40ODc1ODc4OSA2Mi41MTk0ODI0MiA2LjczODc2OTUzIDYzLjMwMjI0NjA5IEMxNC42NjM2MzE4MiA4Ny43NzY1MTQyNCAyNi40MTgxMjMzOCAxMDguNjUxNjcyMzEgNDMuODg2NzE4NzUgMTI3LjY0MDYyNSBDNDUuMzI0MDUwNzYgMTI5LjI0NTMzNTc5IDQ2LjcwODcyOTIzIDEzMC44OTg0NDY0MiA0OC4wNDI5Njg3NSAxMzIuNTg5ODQzNzUgQzUwLjk3NjYxNzYyIDEzNi4yMDI3NDA2NiA1NC40MzY4Mzc0IDEzOS4wMjU1MzM4MyA1OCAxNDIgQzU5LjA5NjM0NzY2IDE0Mi45MjgxMjUgNTkuMDk2MzQ3NjYgMTQyLjkyODEyNSA2MC4yMTQ4NDM3NSAxNDMuODc1IEM5MC4wODg1MTQxMiAxNjguNTI5NDc2NzEgMTI3LjYzMzY0NjM1IDE4Mi4yMTcxNjQxIDE2Ni4zNzUgMTgyLjI1IEMxNjcuNDQ3NDY0NzUgMTgyLjI1MTAxMjEyIDE2Ny40NDc0NjQ3NSAxODIuMjUxMDEyMTIgMTY4LjU0MTU5NTQ2IDE4Mi4yNTIwNDQ2OCBDMTc5LjYyOTM3ODIxIDE4Mi4yMzU0MzUyOCAxOTAuMTk3MzAzODMgMTgxLjYxNTIwMTYgMjAxIDE3OSBDMjAxLjc0OTI2NzU4IDE3OC44MjgzOTM1NSAyMDIuNDk4NTM1MTYgMTc4LjY1Njc4NzExIDIwMy4yNzA1MDc4MSAxNzguNDc5OTgwNDcgQzIzNS4yMjk4NDMwNiAxNzEuMDg3OTgwNDQgMjYyLjUwMzQxNjQxIDE1Ni45ODAxNzUxNiAyODYgMTM0IEMyODYuNzczNDM3NSAxMzMuMjg4NDM3NSAyODcuNTQ2ODc1IDEzMi41NzY4NzUgMjg4LjM0Mzc1IDEzMS44NDM3NSBDMjk5LjYwMzEwMzQzIDEyMS4yMzcxMTI3MSAzMDguMzEwNzA5MjQgMTA4LjIwMzc5NTI0IDMxNS44Nzg5MDYyNSA5NC44MDQ2ODc1IEMzMTYuMjM3NTg3ODkgOTQuMTcwODcxNTggMzE2LjU5NjI2OTUzIDkzLjUzNzA1NTY2IDMxNi45NjU4MjAzMSA5Mi44ODQwMzMyIEMzMTcuNjU0NTc2NTUgOTEuNjI5MjgwNjQgMzE4LjMxNTc1MTM5IDkwLjM1ODk4NTY1IDMxOC45NDgyNDIxOSA4OS4wNzQ5NTExNyBDMzIxLjI3NzM3NTAyIDg0LjUxNTgzNTg5IDMyMy40OTc0MjE5MSA4Mi42NjAyNTk2IDMyOC4xMjUgODAuNTYyNSBDMzI5LjcwNjY3OTY5IDc5LjgyMTkzMzU5IDMyOS43MDY2Nzk2OSA3OS44MjE5MzM1OSAzMzEuMzIwMzEyNSA3OS4wNjY0MDYyNSBDMzM0IDc4IDMzNCA3OCAzMzYgNzggQzMzNS4zNzU0MjcwOCA4Mi41ODMxMzM3IDMzMy41MjY0MDE2MSA4Ni4zNzAyMDc2NyAzMzEuNDM3NSA5MC40Mzc1IEMzMzAuODk3NDIzMSA5MS40OTUyOTY2MyAzMzAuODk3NDIzMSA5MS40OTUyOTY2MyAzMzAuMzQ2NDM1NTUgOTIuNTc0NDYyODkgQzMyOS4yNDExMDA1NiA5NC43MjE3NTc0NCAzMjguMTIyNDUyNjQgOTYuODYxNjEyMTUgMzI3IDk5IEMzMjYuNjg2NDM1NTUgOTkuNjA1ODU5MzggMzI2LjM3Mjg3MTA5IDEwMC4yMTE3MTg3NSAzMjYuMDQ5ODA0NjkgMTAwLjgzNTkzNzUgQzMxOC41MDY1NjcxMyAxMTUuMjg0OTU1OTIgMzA4LjI1NDQ5NjMgMTI4LjI1NjE3Nzc4IDI5NyAxNDAgQzI5NS44NzA3ODEyNSAxNDEuMjA2NTYyNSAyOTUuODcwNzgxMjUgMTQxLjIwNjU2MjUgMjk0LjcxODc1IDE0Mi40Mzc1IEMyNzAuMTM4NjEzNTEgMTY3Ljk3NTMwNDE0IDIzNi41NTA2MDI3NyAxODQuMzQxNTA4NDkgMjAyIDE5MSBDMjAxLjE2NDIwNDEgMTkxLjE2MzcxMDk0IDIwMC4zMjg0MDgyIDE5MS4zMjc0MjE4OCAxOTkuNDY3Mjg1MTYgMTkxLjQ5NjA5Mzc1IEMxNzcuNDgxMDMxNTkgMTk1LjYzNTg5MDE4IDE1NC45MjczNTg2OCAxOTUuMjk1MDA2MDYgMTMzIDE5MSBDMTMyLjEzNzEzMzc5IDE5MC44MzM3MTA5NCAxMzEuMjc0MjY3NTggMTkwLjY2NzQyMTg3IDEzMC4zODUyNTM5MSAxOTAuNDk2MDkzNzUgQzEwNS44MDAwMTAyNiAxODUuNTk4MDkyOCA4MS43Nzg2MDQ2IDE3NS41NTMxNzU0MyA2MiAxNjAgQzYxLjAyNTQ2ODc1IDE1OS4zMDAwMzkwNiA2MC4wNTA5Mzc1IDE1OC42MDAwNzgxMiA1OS4wNDY4NzUgMTU3Ljg3ODkwNjI1IEMyMS4zMjc0ODIyMiAxMzAuMzMyNjAwOTMgLTIuOTkzMjAxNjUgODcuNDUwNDYwMSAtMTAuNzQ2MDkzNzUgNDEuNzgxMjUgQy0xMi42MTkyODY2OSAyOS4yODE3NTI3MSAtMTIuMTk3NDk5MTIgMTYuNjAxOTYyODUgLTEyIDQgQy0xMC41NjU3MDk5OSAzLjMyNjQ1NTAxIC05LjEyNzQyOTQzIDIuNjYxNDAyOTkgLTcuNjg3NSAyIEMtNi44ODY5OTIxOSAxLjYyODc1IC02LjA4NjQ4NDM3IDEuMjU3NSAtNS4yNjE3MTg3NSAwLjg3NSBDLTMgMCAtMyAwIDAgMCBaICIgZmlsbD0iIzNDNDM4QyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzQ0LDQ5OCkiLz4KPHBhdGggZD0iTTAgMCBDMCAyLjMzMzMzMzMzIDAgNC42NjY2NjY2NyAwIDcgQzAuNjYgNyAxLjMyIDcgMiA3IEMyIDcuNjYgMiA4LjMyIDIgOSBDMi45OSA5LjMzIDMuOTggOS42NiA1IDEwIEMzLjg4ODgyODEyIDEwLjY4OTY0ODQ0IDIuNzc3NjU2MjUgMTEuMzc5Mjk2ODggMS42MzI4MTI1IDEyLjA4OTg0Mzc1IEMtNi45Mjk4ODA5MSAxNy40NzQ2MTA0OCAtMTQuODAxOTY0NjMgMjIuODM3MzM1ODEgLTIyIDMwIEMtMjIuNjYgMjkuNjcgLTIzLjMyIDI5LjM0IC0yNCAyOSBDLTE3LjAzNDgzMDcyIDE4LjI1MzIzNjI5IC05LjExMzk2MDc3IDguOTg5OTYxMzEgMCAwIFogIiBmaWxsPSIjM0Q0ODhFIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMTYsNDg2KSIvPgo8cGF0aCBkPSJNMCAwIEMyLjIxNDA2NTY3IDMuMzIxMDk4NSAzLjYwODQ4MzEgNi43NDc2MjI1NiA1LjA2MjUgMTAuNDM3NSBDNS4zMzEyNjk1MyAxMS4xMDU4Nzg5MSA1LjYwMDAzOTA2IDExLjc3NDI1NzgxIDUuODc2OTUzMTIgMTIuNDYyODkwNjIgQzcuMTI1NzYzNTIgMTUuNjA1MTU5MTYgOC4zMTI4NzY2MSAxOC42ODMxNDUxMyA5IDIyIEM4LjAxIDIyIDcuMDIgMjIgNiAyMiBDNS45MTc1IDIyLjU1Njg3NSA1LjgzNSAyMy4xMTM3NSA1Ljc1IDIzLjY4NzUgQzQuNzc2MjA3MzEgMjYuNjkwMDI3NDYgMy4wMDAyMjQ4OCAyOC41ODc3Mjg3OSAxIDMxIEMtNS4zMzkwMTM0NSAyMC4xMjgyNTExMiAtNS4zMzkwMTM0NSAyMC4xMjgyNTExMiAtNC41MDc4MTI1IDE0LjkxMDE1NjI1IEMtMy40OTE4NTk1NCAxMi40NjgzNjU4NiAtMi40MDQ3OTI4MSAxMC4yMzg1NzI3MiAtMSA4IEMtMC4zNCA4IDAuMzIgOCAxIDggQzAuNjcgNS4zNiAwLjM0IDIuNzIgMCAwIFogIiBmaWxsPSIjNDI0NzhFIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzNTEsNTY1KSIvPgo8cGF0aCBkPSJNMCAwIEMtMC42MjA0NTQ2MyA0LjIzMzIyODQ0IC0yLjEwNTIzNTU5IDcuNTIyOTAyOTUgLTQuMDYyNSAxMS4zMTI1IEMtNC42MTAzNTE1NiAxMi4zODExMzI4MSAtNS4xNTgyMDMxMiAxMy40NDk3NjU2MyAtNS43MjI2NTYyNSAxNC41NTA3ODEyNSBDLTYuMTQ0MTc5NjkgMTUuMzU5MDIzNDQgLTYuNTY1NzAzMTMgMTYuMTY3MjY1NjMgLTcgMTcgQy04LjMyIDE2LjY3IC05LjY0IDE2LjM0IC0xMSAxNiBDLTEwLjY3IDE0LjAyIC0xMC4zNCAxMi4wNCAtMTAgMTAgQy0xMC45OSAxMC42NiAtMTEuOTggMTEuMzIgLTEzIDEyIEMtMTMuMzMgMTAuMDIgLTEzLjY2IDguMDQgLTE0IDYgQy0xMi4wNDQxNDY3NSA0Ljk5NTE1Nzk2IC0xMC4wODUyMzc2MyAzLjk5NjI2MTk1IC04LjEyNSAzIEMtNi40ODkxNzk2OSAyLjE2NDY4NzUgLTYuNDg5MTc5NjkgMi4xNjQ2ODc1IC00LjgyMDMxMjUgMS4zMTI1IEMtMiAwIC0yIDAgMCAwIFogIiBmaWxsPSIjM0Y0MzhDIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2ODAsNTc2KSIvPgo8cGF0aCBkPSJNMCAwIEMzIDAuOTM3NSAzIDAuOTM3NSA0LjkzNzUgMy4zNzUgQzUuMjg4MTI1IDQuMjIwNjI1IDUuNjM4NzUgNS4wNjYyNSA2IDUuOTM3NSBDNS42NyA2LjU5NzUgNS4zNCA3LjI1NzUgNSA3LjkzNzUgQzQuMDEgNy45Mzc1IDMuMDIgNy45Mzc1IDIgNy45Mzc1IEMyIDguNTk3NSAyIDkuMjU3NSAyIDkuOTM3NSBDMS4zNCA5LjkzNzUgMC42OCA5LjkzNzUgMCA5LjkzNzUgQzAgMTAuNTk3NSAwIDExLjI1NzUgMCAxMS45Mzc1IEMtMS4zMiAxMS42MDc1IC0yLjY0IDExLjI3NzUgLTQgMTAuOTM3NSBDLTQuMTAzMTI1IDEwLjI5ODEyNSAtNC4yMDYyNSA5LjY1ODc1IC00LjMxMjUgOSBDLTQuNTM5Mzc1IDguMzE5Mzc1IC00Ljc2NjI1IDcuNjM4NzUgLTUgNi45Mzc1IEMtNS45OSA2LjYwNzUgLTYuOTggNi4yNzc1IC04IDUuOTM3NSBDLTggNS4yNzc1IC04IDQuNjE3NSAtOCAzLjkzNzUgQy03LjM0IDMuOTM3NSAtNi42OCAzLjkzNzUgLTYgMy45Mzc1IEMtNiAzLjI3NzUgLTYgMi42MTc1IC02IDEuOTM3NSBDLTMgLTAuMDYyNSAtMyAtMC4wNjI1IDAgMCBaICIgZmlsbD0iIzNCNDE4QiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDIzLDY1Ni4wNjI1KSIvPgo8cGF0aCBkPSJNMCAwIEMxLjMyIDAuNjYgMi42NCAxLjMyIDQgMiBDLTEuNjY2NjY2NjcgNy42NjY2NjY2NyAtNy4zMzMzMzMzMyAxMy4zMzMzMzMzMyAtMTMgMTkgQy0xMyAxNy4wMiAtMTMgMTUuMDQgLTEzIDEzIEMtMTIuMzQgMTIuNjcgLTExLjY4IDEyLjM0IC0xMSAxMiBDLTExLjY2IDExLjM0IC0xMi4zMiAxMC42OCAtMTMgMTAgQy0xMS4zNzY2MDE5NSA4LjI5MTE1OTk1IC05LjcwNjgwOTQ3IDYuNjI1NTMyODMgLTggNSBDLTcuMzQgNSAtNi42OCA1IC02IDUgQy01LjM0IDMuNjggLTQuNjggMi4zNiAtNCAxIEMtMy4wMSAxIC0yLjAyIDEgLTEgMSBDLTAuNjcgMC42NyAtMC4zNCAwLjM0IDAgMCBaICIgZmlsbD0iIzQwNDc4RiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzkxLDM4OSkiLz4KPHBhdGggZD0iTTAgMCBDMi41ODkyNjMzMSAyLjU4OTI2MzMxIDIuMzczOTgwNDMgNC4wMjcwNTI3OSAyLjYyNSA3LjYyNSBDMi42OTk3NjU2MiA4LjYyNzg5MDYyIDIuNzc0NTMxMjUgOS42MzA3ODEyNSAyLjg1MTU2MjUgMTAuNjY0MDYyNSBDMi45MjUwMzkwNiAxMS44MjAzNTE1NiAyLjkyNTAzOTA2IDExLjgyMDM1MTU2IDMgMTMgQzIuMDEgMTMuMzMgMS4wMiAxMy42NiAwIDE0IEMwLjA2MTg3NSAxNC44ODY4NzUgMC4xMjM3NSAxNS43NzM3NSAwLjE4NzUgMTYuNjg3NSBDLTAuMDE5OTc5MDQgMjAuMzUyOTYzMDggLTAuODQ5MTIxNzYgMjIuMDc0ODA1NTkgLTMgMjUgQy0zLjMzIDI1IC0zLjY2IDI1IC00IDI1IEMtMi42NDk3NDYxOSAyLjY0OTc0NjE5IC0yLjY0OTc0NjE5IDIuNjQ5NzQ2MTkgMCAwIFogIiBmaWxsPSIjM0EzRjg0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzNDMsNTM1KSIvPgo8cGF0aCBkPSJNMCAwIEMwIDAuNjYgMCAxLjMyIDAgMiBDLTEyLjU0IDIgLTI1LjA4IDIgLTM4IDIgQy0zNC4zMDI3MjgxMiAtMC40NjQ4NDc5MiAtMzEuMjMzMTU0OTMgLTAuNDQ3ODUwMDMgLTI2LjkzNzUgLTAuNjI1IEMtMjUuNzkwMDMyOTYgLTAuNjgwODMyNTIgLTI1Ljc5MDAzMjk2IC0wLjY4MDgzMjUyIC0yNC42MTkzODQ3NyAtMC43Mzc3OTI5NyBDLTE2LjI4ODc3MjY2IC0xLjEyMDQyNDUzIC04LjI2NjI2MDQ3IC0xLjIyNDYzMTE4IDAgMCBaICIgZmlsbD0iIzJCMzQ4MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDE1LDQ1MykiLz4KPHBhdGggZD0iTTAgMCBDMiAwIDIgMCAzLjYyNSAxLjMxMjUgQzUgMyA1IDMgNSA2IEMzLjM1IDYgMS43IDYgMCA2IEMtMS4zMiA4LjMxIC0yLjY0IDEwLjYyIC00IDEzIEMtNC45OSAxMyAtNS45OCAxMyAtNyAxMyBDLTcuNjYgMTEuMzUgLTguMzIgOS43IC05IDggQy04LjQzNDEwMTU2IDcuNTkwMDc4MTIgLTcuODY4MjAzMTMgNy4xODAxNTYyNSAtNy4yODUxNTYyNSA2Ljc1NzgxMjUgQy02LjE4NDk0MTQxIDUuOTQ5NTcwMzEgLTYuMTg0OTQxNDEgNS45NDk1NzAzMSAtNS4wNjI1IDUuMTI1IEMtNC4zMzE2MDE1NiA0LjU5MTMyODEzIC0zLjYwMDcwMzEyIDQuMDU3NjU2MjUgLTIuODQ3NjU2MjUgMy41MDc4MTI1IEMtMC44ODkwMTc2NSAyLjExOTg3ODk2IC0wLjg4OTAxNzY1IDIuMTE5ODc4OTYgMCAwIFogIiBmaWxsPSIjMzAzOTgyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2NTgsNjAzKSIvPgo8cGF0aCBkPSJNMCAwIEMxLjY1IDAuMzMgMy4zIDAuNjYgNSAxIEM1Ljc0OTI2MDcxIDQuNjYzMDUyMzQgNi4yMzgwMDE0IDcuNDIzNTUxNTIgNSAxMSBDNC4wMSAxMSAzLjAyIDExIDIgMTEgQzIgMTAuMzQgMiA5LjY4IDIgOSBDMS4zODEyNSA5LjQ5NSAwLjc2MjUgOS45OSAwLjEyNSAxMC41IEMtMiAxMiAtMiAxMiAtNCAxMiBDLTQgOSAtNCA5IC0xLjU2MjUgNi40Mzc1IEMtMC43MTY4NzUgNS42MzMxMjUgMC4xMjg3NSA0LjgyODc1IDEgNCBDMS4zMyAzLjM0IDEuNjYgMi42OCAyIDIgQzEuMzQgMiAwLjY4IDIgMCAyIEMwIDEuMzQgMCAwLjY4IDAgMCBaICIgZmlsbD0iIzMyM0M4NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjQyLDYyMCkiLz4KPHBhdGggZD0iTTAgMCBDMS4zMiAwLjMzIDIuNjQgMC42NiA0IDEgQzUuMjg1NzE0MjkgOC40Mjg1NzE0MyA1LjI4NTcxNDI5IDguNDI4NTcxNDMgNCAxMiBDMy4zNCAxMiAyLjY4IDEyIDIgMTIgQzEuMzQgMTAuMzUgMC42OCA4LjcgMCA3IEMtMC42NiA3IC0xLjMyIDcgLTIgNyBDLTIgNy42NiAtMiA4LjMyIC0yIDkgQy0yLjY2IDkgLTMuMzIgOSAtNCA5IEMtMi44MDEwMDMwMiA1LjkxNjg2NDkgLTEuNTIyOTk1MjMgMi45MzcyMDUwOCAwIDAgWiAiIGZpbGw9IiMzNzNGODkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM1Nyw1ODcpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuOTkgMCAxLjk4IDAgMyAwIEMyLjY3IDguMjUgMi4zNCAxNi41IDIgMjUgQzEuMzQgMjUgMC42OCAyNSAwIDI1IEMwIDE2Ljc1IDAgOC41IDAgMCBaICIgZmlsbD0iIzRGNTU5MiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzMyLDUwMikiLz4KPHBhdGggZD0iTTAgMCBDOC4yNSAwIDE2LjUgMCAyNSAwIEMyNSAwLjMzIDI1IDAuNjYgMjUgMSBDMTMuNjE1IDEuOTkgMTMuNjE1IDEuOTkgMiAzIEMyIDIuMzQgMiAxLjY4IDIgMSBDMS4zNCAwLjY3IDAuNjggMC4zNCAwIDAgWiAiIGZpbGw9IiMyRjM5ODQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM1MCw0NzgpIi8+CjxwYXRoIGQ9Ik0wIDAgQzIuNDc1IDAuOTkgMi40NzUgMC45OSA1IDIgQzQuMDQ1NzgxOTIgMy4xNDkyNjI2NiAzLjA4NjQ3OTU1IDQuMjk0MzA1NDEgMi4xMjUgNS40Mzc1IEMxLjU5MTMyODEzIDYuMDc1NTg1OTQgMS4wNTc2NTYyNSA2LjcxMzY3MTg4IDAuNTA3ODEyNSA3LjM3MTA5Mzc1IEMtMSA5IC0xIDkgLTMgMTAgQy0zIDkuMDEgLTMgOC4wMiAtMyA3IEMtMy42NiA3IC00LjMyIDcgLTUgNyBDLTUgNi4wMSAtNSA1LjAyIC01IDQgQy00LjAxIDMuNjcgLTMuMDIgMy4zNCAtMiAzIEMtMS4zNCAyLjAxIC0wLjY4IDEuMDIgMCAwIFogIiBmaWxsPSIjNDE0Nzk2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MzQsNjM3KSIvPgo8cGF0aCBkPSJNMCAwIEMtMC42NiAxLjY1IC0xLjMyIDMuMyAtMiA1IEMtNC42NCA1IC03LjI4IDUgLTEwIDUgQy0xMCA0LjM0IC0xMCAzLjY4IC0xMCAzIEMtMTEuMzIgMi42NyAtMTIuNjQgMi4zNCAtMTQgMiBDLTQuNTg5OTc3MjIgLTAuMjk2MTI3NTYgLTQuNTg5OTc3MjIgLTAuMjk2MTI3NTYgMCAwIFogIiBmaWxsPSIjNEM1Mzk1IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1NTUsNjc2KSIvPgo8cGF0aCBkPSJNMCAwIEMwIDMuODAzNDU4NzcgLTEuMTM3ODYzMzEgNC43NzcwMTAxNSAtMy41IDcuNjg3NSBDLTQuMTQ5Njg3NSA4LjQ5NTc0MjE5IC00Ljc5OTM3NSA5LjMwMzk4NDM4IC01LjQ2ODc1IDEwLjEzNjcxODc1IEMtNS45NzQwNjI1IDEwLjc1MTYwMTU2IC02LjQ3OTM3NSAxMS4zNjY0ODQzOCAtNyAxMiBDLTcuNjYgMTEuNjcgLTguMzIgMTEuMzQgLTkgMTEgQy05IDguODc1IC05IDguODc1IC04IDYgQy01LjUwMjI0MjE3IDMuNzQ1MTUzMDggLTIuODAxOTgwMzcgMS44NTczNDkxNyAwIDAgWiAiIGZpbGw9IiM0NTREOTIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDczMCw1MTMpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMCAxLjMyIDAgMiAwIEMyIDAuNjYgMiAxLjMyIDIgMiBDMi45OSAyLjMzIDMuOTggMi42NiA1IDMgQzIuNjkgNS4zMSAwLjM4IDcuNjIgLTIgMTAgQy0yLjY2IDguNjggLTMuMzIgNy4zNiAtNCA2IEMtMi43MjYwNDExIDMuOTYxNjY1NzYgLTEuMzg5MzgwNzcgMS45NjE0Nzg3NCAwIDAgWiAiIGZpbGw9IiM0MjQ5OTQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY0Miw2MjkpIi8+CjxwYXRoIGQ9Ik0wIDAgQzIuMzEgMC4zMyA0LjYyIDAuNjYgNyAxIEM2Ljc1IDIuODc1IDYuNzUgMi44NzUgNiA1IEMzLjkzNzUgNi4yNSAzLjkzNzUgNi4yNSAyIDcgQzIgNy42NiAyIDguMzIgMiA5IEMxLjAxIDkgMC4wMiA5IC0xIDkgQy0xIDguMzQgLTEgNy42OCAtMSA3IEMtMC4zNCA3IDAuMzIgNyAxIDcgQzAuNjcgNC42OSAwLjM0IDIuMzggMCAwIFogIiBmaWxsPSIjMzAzODg0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzNjEsNjAwKSIvPgo8cGF0aCBkPSJNMCAwIEMwLjY2IDAgMS4zMiAwIDIgMCBDMi41NjM1OTY0OSA5LjU4MTE0MDM1IDIuNTYzNTk2NDkgOS41ODExNDAzNSAtMSAxNCBDLTEuMzMgMTQgLTEuNjYgMTQgLTIgMTQgQy0xLjg1OTcwNTgxIDExLjg1Mzc5NzQgLTEuNzEyNjE4MzYgOS43MDgwMzc4MiAtMS41NjI1IDcuNTYyNSBDLTEuNDgxMjg5MDYgNi4zNjc1MzkwNiAtMS40MDAwNzgxMiA1LjE3MjU3ODEyIC0xLjMxNjQwNjI1IDMuOTQxNDA2MjUgQy0xIDEgLTEgMSAwIDAgWiAiIGZpbGw9IiMyRjM1ODAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM0MSw1NDYpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMS4zMiAxLjMyIDIuNjQgMiA0IEMtMS4xNjk1Mjg0NyA3LjI2MDA4NjQzIC00LjM5OTM3OTg5IDEwLjIyMjM3ODc3IC04IDEzIEMtOCAxMCAtOCAxMCAtNiA3IEMtNS4wMSA3IC00LjAyIDcgLTMgNyBDLTIuNjkwNjI1IDYuMDMwNjI1IC0yLjM4MTI1IDUuMDYxMjUgLTIuMDYyNSA0LjA2MjUgQy0xIDEgLTEgMSAwIDAgWiAiIGZpbGw9IiM0MzQ5OTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQwNCwzNzYpIi8+CjxwYXRoIGQ9Ik0wIDAgQy0wLjUwNTIyMjIyIDQuMzc4NTkyNTUgLTMuMTc4MjcyMjIgNi44MTY1MTIyNCAtNiAxMCBDLTYuOTkgOS42NyAtNy45OCA5LjM0IC05IDkgQy05IDYgLTkgNiAtNy41MzkwNjI1IDQuMzk0NTMxMjUgQy02LjU5MTYwMTU2IDMuNjExNDI1NzggLTYuNTkxNjAxNTYgMy42MTE0MjU3OCAtNS42MjUgMi44MTI1IEMtNC42ODUyNzM0NCAyLjAxNzc5Mjk3IC00LjY4NTI3MzQ0IDIuMDE3NzkyOTcgLTMuNzI2NTYyNSAxLjIwNzAzMTI1IEMtMiAwIC0yIDAgMCAwIFogIiBmaWxsPSIjMzUzRDg5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3MjIsNTI0KSIvPgo8cGF0aCBkPSJNMCAwIEMxLjQ4ODI4MTI1IDEuMDgyMDMxMjUgMS40ODgyODEyNSAxLjA4MjAzMTI1IDMgMyBDMy4yOTI5Njg3NSA2LjEzNjcxODc1IDMuMjkyOTY4NzUgNi4xMzY3MTg3NSAzLjE4NzUgOS42ODc1IEMzLjE2MDQyOTY5IDEwLjg2Njk5MjE5IDMuMTMzMzU5MzggMTIuMDQ2NDg0MzcgMy4xMDU0Njg3NSAxMy4yNjE3MTg3NSBDMy4wNzA2NjQwNiAxNC4xNjUzNTE1NiAzLjAzNTg1OTM3IDE1LjA2ODk4NDM4IDMgMTYgQzIuMzQgMTYuMzMgMS42OCAxNi42NiAxIDE3IEMwLjE2Nzk0MTggMTEuMjc5NTk5ODkgLTAuMTIwMzY2NjQgNS43Nzc1OTg4NCAwIDAgWiAiIGZpbGw9IiMzMzM5ODIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY4MCw0ODUpIi8+CjxwYXRoIGQ9Ik0wIDAgQzIuOTcgMC40OTUgMi45NyAwLjQ5NSA2IDEgQzIuODM1MjU2OTUgNC4yNTUxNjQyOCAtMC4zMjc1Mjc5MSA3LjMyMDA4NzkzIC00IDEwIEMtNC42NiAxMCAtNS4zMiAxMCAtNiAxMCBDLTUuNjg3NSA4LjA2MjUgLTUuNjg3NSA4LjA2MjUgLTUgNiBDLTQuMDEgNS42NyAtMy4wMiA1LjM0IC0yIDUgQy0wLjc4MTMwMDcxIDIuNDk1NTI0ODQgLTAuNzgxMzAwNzEgMi40OTU1MjQ4NCAwIDAgWiAiIGZpbGw9IiM0MzRCOTQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYyNSw2NDYpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuMzMgMC45OSAwLjY2IDEuOTggMSAzIEMwLjAxIDMuNDk1IDAuMDEgMy40OTUgLTEgNCBDLTEuMzMgNC45OSAtMS42NiA1Ljk4IC0yIDcgQy0yLjY2IDcgLTMuMzIgNyAtNCA3IEMtMy4zNCA5LjMxIC0yLjY4IDExLjYyIC0yIDE0IEMtMi45OSAxNCAtMy45OCAxNCAtNSAxNCBDLTYuNDYwNjI4NSAxMS4zNTI2MTA4NCAtNyAxMC4xMDU1MTY2NiAtNyA3IEMtNC42MjUgNC40Mzc1IC00LjYyNSA0LjQzNzUgLTIgMiBDLTEuMzQgMS4zNCAtMC42OCAwLjY4IDAgMCBaICIgZmlsbD0iIzMwM0E4MiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzc3LDM5OSkiLz4KPHBhdGggZD0iTTAgMCBDMC45OSAwLjk5IDEuOTggMS45OCAzIDMgQzEuODQ4MjY2NDUgNS40NjgwMDA0NyAwLjk1MjE2NDM1IDcuMDQ3ODM1NjUgLTEgOSBDLTEgOC4zNCAtMSA3LjY4IC0xIDcgQy0yLjY1IDcuNjYgLTQuMyA4LjMyIC02IDkgQy00IDYgLTIgMyAwIDAgWiAiIGZpbGw9IiM0MDQ5OTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY0OCw2MTEpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMCAxLjMyIDAgMiAwIEMxLjM4ODAxNjI0IDMuNDM5NTAzNjQgMC4wNzk0MTE1MyA1LjUxNTY0NDg1IC0yLjA2MjUgOC4yNSBDLTIuNjEwMzUxNTYgOC45NTY0MDYyNSAtMy4xNTgyMDMxMiA5LjY2MjgxMjUgLTMuNzIyNjU2MjUgMTAuMzkwNjI1IEMtNC4xNDQxNzk2OSAxMC45MjE3MTg3NSAtNC41NjU3MDMxMyAxMS40NTI4MTI1IC01IDEyIEMtNS44MjYzODM3NiA5LjEwNzY1Njg1IC02IDcuMTEyNTc1NjkgLTYgNCBDLTUuMzQgNCAtNC42OCA0IC00IDQgQy00IDQuNjYgLTQgNS4zMiAtNCA2IEMtMy4zNCA2IC0yLjY4IDYgLTIgNiBDLTIgNC42OCAtMiAzLjM2IC0yIDIgQy0xLjM0IDEuMzQgLTAuNjggMC42OCAwIDAgWiAiIGZpbGw9IiM0MDQ5OTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY1Myw2MTkpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMCAxLjMyIDAgMiAwIEMyIDEuMzIgMiAyLjY0IDIgNCBDMS4zNCA0IDAuNjggNCAwIDQgQy0wLjEwMzEyNSA0LjkyODEyNSAtMC4yMDYyNSA1Ljg1NjI1IC0wLjMxMjUgNi44MTI1IEMtMS4wMDcwMTkyIDEwLjAzMjU0MzU4IC0xLjQ3NzQwOTM5IDExLjAyNTc5ODY1IC00IDEzIEMtNC42MzkzNDYwMiA3Ljg4NTIzMTgxIC0yLjQwNTMzNTQ3IDQuMzI3NDU2MjIgMCAwIFogIiBmaWxsPSIjMzAzNjgwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzNTAsNTY5KSIvPgo8cGF0aCBkPSJNMCAwIEMwLjY2IDAgMS4zMiAwIDIgMCBDMiAwLjY2IDIgMS4zMiAyIDIgQzIuOTI4MTI1IDIuMTIzNzUgMi45MjgxMjUgMi4xMjM3NSAzLjg3NSAyLjI1IEM2IDMgNiAzIDcuMjUgNS4wNjI1IEM3LjQ5NzUgNS43MDE4NzUgNy43NDUgNi4zNDEyNSA4IDcgQzcuMDEgNy4zMyA2LjAyIDcuNjYgNSA4IEMwIDIuMjUgMCAyLjI1IDAgMCBaICIgZmlsbD0iIzJEMzY4NCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNzAxLDUzNCkiLz4KPHBhdGggZD0iTTAgMCBDLTAuMzMgMS45OCAtMC42NiAzLjk2IC0xIDYgQy0xLjY2IDYgLTIuMzIgNiAtMyA2IEMtMyA1LjM0IC0zIDQuNjggLTMgNCBDLTQuNjUgNCAtNi4zIDQgLTggNCBDLTggMy4zNCAtOCAyLjY4IC04IDIgQy01LjA5Mzk5NzM5IDAuNzQzMzUwMjIgLTMuMjAzOTU0MTYgMCAwIDAgWiAiIGZpbGw9IiM0NzRBOEIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM0NCw0OTgpIi8+CjxwYXRoIGQ9Ik0wIDAgQy0xLjQ3NjkyMzA4IDQuNjc2OTIzMDggLTEuNDc2OTIzMDggNC42NzY5MjMwOCAtNC4xMjUgNi4zMTI1IEMtNC43NDM3NSA2LjUzOTM3NSAtNS4zNjI1IDYuNzY2MjUgLTYgNyBDLTYuOTkgNi4zNCAtNy45OCA1LjY4IC05IDUgQy03Ljg3OTI2MTM4IDQuMTYwOTQ0MzUgLTYuNzUzMjU0NTMgMy4zMjg5MjE2OSAtNS42MjUgMi41IEMtNC45OTg1MTU2MiAyLjAzNTkzNzUgLTQuMzcyMDMxMjUgMS41NzE4NzUgLTMuNzI2NTYyNSAxLjA5Mzc1IEMtMiAwIC0yIDAgMCAwIFogIiBmaWxsPSIjMzEzQTgyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MTksMzY4KSIvPgo8cGF0aCBkPSJNMCAwIEMwLjY2IDAuMzMgMS4zMiAwLjY2IDIgMSBDMiA1IDIgNSAwLjY4NzUgNi40ODQzNzUgQy0wLjg3NSA3LjY1NjI1IC0yLjQzNzUgOC44MjgxMjUgLTQgMTAgQy00LjY2IDkuNjcgLTUuMzIgOS4zNCAtNiA5IEMtNC4wMiA2LjAzIC0yLjA0IDMuMDYgMCAwIFogIiBmaWxsPSIjM0Q0ODhGIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2NTUsNjAxKSIvPgo8cGF0aCBkPSJNMCAwIEMtMC4zMyAxLjMyIC0wLjY2IDIuNjQgLTEgNCBDLTMuMzEgNC42NiAtNS42MiA1LjMyIC04IDYgQy04IDUuMzQgLTggNC42OCAtOCA0IEMtNy4zNCA0IC02LjY4IDQgLTYgNCBDLTYgMy4zNCAtNiAyLjY4IC02IDIgQy0zIDAgLTMgMCAwIDAgWiAiIGZpbGw9IiMzMDM4ODEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQyMyw2NTYpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuOTkgMCAxLjk4IDAgMyAwIEMyLjQyNjc2NTY5IDMuODY5MzMxNjIgMC42MTA0NjQ0OCA2LjE1MjIyMDU3IC0yIDkgQy0yLjY2IDkgLTMuMzIgOSAtNCA5IEMtMi44MDEwMDMwMiA1LjkxNjg2NDkgLTEuNTIyOTk1MjMgMi45MzcyMDUwOCAwIDAgWiAiIGZpbGw9IiMzMDM2ODAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM1Nyw1ODcpIi8+CjxwYXRoIGQ9Ik0wIDAgQzIuOTcgMC40OTUgMi45NyAwLjQ5NSA2IDEgQzIuODAwMDk0OTIgMy43NDI3NzU3OCAtMC4wMDQ5OTM4MiA1LjYzMDI4MzYgLTQgNyBDLTQgNi4zNCAtNCA1LjY4IC00IDUgQy0zLjAxIDUgLTIuMDIgNSAtMSA1IEMtMC42NyAzLjM1IC0wLjM0IDEuNyAwIDAgWiAiIGZpbGw9IiM0QzU0OTUiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMxNSw0OTQpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMCAxLjMyIDAgMiAwIEMyIDAuOTkgMiAxLjk4IDIgMyBDMi42NiAzLjMzIDMuMzIgMy42NiA0IDQgQzMuMDEgNC45OSAyLjAyIDUuOTggMSA3IEMtMC4zMiA2LjM0IC0xLjY0IDUuNjggLTMgNSBDLTMgNC4zNCAtMyAzLjY4IC0zIDMgQy0yLjM0IDMgLTEuNjggMyAtMSAzIEMtMC42NyAyLjAxIC0wLjM0IDEuMDIgMCAwIFogIiBmaWxsPSIjMzQzQjg3IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzNzcsNjIyKSIvPgo8cGF0aCBkPSJNMCAwIEMwLjk5IDAuNjYgMS45OCAxLjMyIDMgMiBDMS4zNSA0LjY0IC0wLjMgNy4yOCAtMiAxMCBDLTMuMTkxNTYyOTIgNS4yMzM3NDgzMyAtMi4zNDE1OTQ2IDQuMTIxMjA2NDkgMCAwIFogIiBmaWxsPSIjNDQ0RDkyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2NjYsNTk5KSIvPgo8cGF0aCBkPSJNMCAwIEMxLjcyODgwOTgyIC0wLjA1NDQ5ODM4IDMuNDU4MTI3MTIgLTAuMDkzMDE2ODggNS4xODc1IC0wLjEyNSBDNi4xNTA0Mjk2OSAtMC4xNDgyMDMxMyA3LjExMzM1OTM4IC0wLjE3MTQwNjI1IDguMTA1NDY4NzUgLTAuMTk1MzEyNSBDMTEuMTI4MTI3NzggMC4wMDg2NDU2IDEzLjI2NzY5OTg1IDAuNzMxMjUzNjggMTYgMiBDMTYgMi4zMyAxNiAyLjY2IDE2IDMgQzEzLjM2IDMgMTAuNzIgMyA4IDMgQzggMi4zNCA4IDEuNjggOCAxIEM1LjM2IDEgMi43MiAxIDAgMSBDMCAwLjY3IDAgMC4zNCAwIDAgWiAiIGZpbGw9IiM0MTQ4OEYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQwNyw0NTIpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMCAxLjMyIDAgMiAwIEMxLjY4NzUgMi4zNzUgMS42ODc1IDIuMzc1IDEgNSBDMC4wMSA1LjY2IC0wLjk4IDYuMzIgLTIgNyBDLTIuOTkgNi42NyAtMy45OCA2LjM0IC01IDYgQy00LjM0IDUuMDEgLTMuNjggNC4wMiAtMyAzIEMtMi4zNCAzIC0xLjY4IDMgLTEgMyBDLTAuNjcgMi4wMSAtMC4zNCAxLjAyIDAgMCBaICIgZmlsbD0iIzMxM0E4NSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzg5LDYzMSkiLz4KPHBhdGggZD0iTTAgMCBDMC42NiAwLjMzIDEuMzIgMC42NiAyIDEgQzEuMDEgMi40ODUgMS4wMSAyLjQ4NSAwIDQgQy0wLjM4NDk5ODkxIDUuNjU1NDk1MzEgLTAuNzI3OTMxMzUgNy4zMjIyNDMzIC0xIDkgQy0xLjMzIDguMzQgLTEuNjYgNy42OCAtMiA3IEMtMi42NiA3IC0zLjMyIDcgLTQgNyBDLTQgNS42OCAtNCA0LjM2IC00IDMgQy0yIDEuMjUgLTIgMS4yNSAwIDAgWiAiIGZpbGw9IiMzMDM5N0YiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM2Nyw0MTMpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAgMC45OSAwIDEuOTggMCAzIEMtMS4zMiAzLjMzIC0yLjY0IDMuNjYgLTQgNCBDLTQgMy4wMSAtNCAyLjAyIC00IDEgQy01LjMyIDAuNjcgLTYuNjQgMC4zNCAtOCAwIEMtNC45NDczNjMzNiAtMC45ODEyMDQ2NCAtMy4wNTI2MzY2NCAtMC45ODEyMDQ2NCAwIDAgWiAiIGZpbGw9IiM0RjU0OTIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ4MCwzMzYpIi8+CjxwYXRoIGQ9Ik0wIDAgQy0wLjU1Nzc0MjcyIDMuMjM0OTA3NzYgLTEuMzcyMTE1MDggNC45Nzg1NTAwNiAtNCA3IEMtNC45OSA3IC01Ljk4IDcgLTcgNyBDLTcgNi4zNCAtNyA1LjY4IC03IDUgQy02LjM0IDUgLTUuNjggNSAtNSA1IEMtNSA0LjM0IC01IDMuNjggLTUgMyBDLTIuNDYxNTM4NDYgMCAtMi40NjE1Mzg0NiAwIDAgMCBaICIgZmlsbD0iIzMwM0E4MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDEyLDY0OSkiLz4KPHBhdGggZD0iTTAgMCBDLTAuNzUgNC43NSAtMC43NSA0Ljc1IC0zIDcgQy0zLjEyMzc1IDYuMzYwNjI1IC0zLjI0NzUgNS43MjEyNSAtMy4zNzUgNS4wNjI1IEMtMy42ODQzNzUgNC4wNDE1NjI1IC0zLjY4NDM3NSA0LjA0MTU2MjUgLTQgMyBDLTQuNjYgMi42NyAtNS4zMiAyLjM0IC02IDIgQy0yLjI1IDAgLTIuMjUgMCAwIDAgWiAiIGZpbGw9IiM1QjVGOTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY4MCw1NzYpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMC45OSAxLjMyIDEuOTggMiAzIEMwLjAyIDQuMzIgLTEuOTYgNS42NCAtNCA3IEMtMy40MzYyODU4NiAzLjczMDQ1Nzk4IC0yLjUwMDM3NzM0IDIuMTc0MjQxMTcgMCAwIFogIiBmaWxsPSIjMzIzNzgyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2NjAsNDE2KSIvPgo8cGF0aCBkPSJNMCAwIEMyLjk3IDAgNS45NCAwIDkgMCBDOC42NyAwLjY2IDguMzQgMS4zMiA4IDIgQzUuOTMzNTkzNzUgMi40MTQwNjI1IDUuOTMzNTkzNzUgMi40MTQwNjI1IDMuNDM3NSAyLjYyNSBDMi42MTEyMTA5NCAyLjY5OTc2NTYyIDEuNzg0OTIxODggMi43NzQ1MzEyNSAwLjkzMzU5Mzc1IDIuODUxNTYyNSBDLTAuMDIzNTM1MTYgMi45MjUwMzkwNiAtMC4wMjM1MzUxNiAyLjkyNTAzOTA2IC0xIDMgQy0wLjY3IDIuMDEgLTAuMzQgMS4wMiAwIDAgWiAiIGZpbGw9IiMyQjM0ODQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDU1MSwzMzkpIi8+CjxwYXRoIGQ9Ik0wIDAgQzAuNjYgMC4zMyAxLjMyIDAuNjYgMiAxIEMxIDQgMSA0IC0xLjA2MjUgNS4xODc1IEMtMS43MDE4NzUgNS40NTU2MjUgLTIuMzQxMjUgNS43MjM3NSAtMyA2IEMtMyAzIC0zIDMgLTEuNSAxLjMxMjUgQy0wLjc1NzUgMC42NjI4MTI1IC0wLjc1NzUgMC42NjI4MTI1IDAgMCBaIE0tNiA1IEMtNS4zNCA1IC00LjY4IDUgLTQgNSBDLTQgNS42NiAtNCA2LjMyIC00IDcgQy00LjY2IDcgLTUuMzIgNyAtNiA3IEMtNiA2LjM0IC02IDUuNjggLTYgNSBaICIgZmlsbD0iIzJGMzg4MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzczLDYxMSkiLz4KPHBhdGggZD0iTTAgMCBDMC4zMyAwLjY2IDAuNjYgMS4zMiAxIDIgQy0zIDguNTcxNDI4NTcgLTMgOC41NzE0Mjg1NyAtNyAxMCBDLTQuNzU0MjE1NTggNi41OTI2MDI5NSAtMi40ODg2Mjg3OCAzLjIzNTIxNzQyIDAgMCBaICIgZmlsbD0iIzQzNTE4RiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzc2LDM5MykiLz4KPHBhdGggZD0iTTAgMCBDMC45OSAwLjMzIDEuOTggMC42NiAzIDEgQzMuMzMgMi42NSAzLjY2IDQuMyA0IDYgQzEuMDg0ODI3MDggNC45MjU5ODg5MiAtMC43NzgxMDE3NiA0LjIyMTg5ODI0IC0zIDIgQy0yLjAxIDEuMzQgLTEuMDIgMC42OCAwIDAgWiAiIGZpbGw9IiM0MjRCOTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDU5NiwzNjEpIi8+CjxwYXRoIGQ9Ik0wIDAgQzEuOTggMC42NiAzLjk2IDEuMzIgNiAyIEM2IDIuNjYgNiAzLjMyIDYgNCBDNC4wMiA0IDIuMDQgNCAwIDQgQy0wLjMzIDMuMzQgLTAuNjYgMi42OCAtMSAyIEMtMC42NyAxLjM0IC0wLjM0IDAuNjggMCAwIFogIiBmaWxsPSIjMkUzNDg2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2ODUsNTQyKSIvPgo8cGF0aCBkPSJNMCAwIEMwLjk5IDAuMzMgMS45OCAwLjY2IDMgMSBDMS4zNSAyLjY1IC0wLjMgNC4zIC0yIDYgQy0yLjk5IDUuNjcgLTMuOTggNS4zNCAtNSA1IEMtMy4zNSAzLjM1IC0xLjcgMS43IDAgMCBaICIgZmlsbD0iIzNFNEU4RiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjMyLDYzMCkiLz4KPHBhdGggZD0iTTAgMCBDMC42NiAwLjMzIDEuMzIgMC42NiAyIDEgQzIgNCAyIDQgMSA3IEMwLjAxIDYuMzQgLTAuOTggNS42OCAtMiA1IEMtMiAzLjY4IC0yIDIuMzYgLTIgMSBDLTEuMzQgMC42NyAtMC42OCAwLjM0IDAgMCBaICIgZmlsbD0iIzNFNDI5NSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzc1LDQwNSkiLz4KPHBhdGggZD0iTTAgMCBDMCAzIDAgMyAtMi41IDUuNjg3NSBDLTMuMzI1IDYuNDUwNjI1IC00LjE1IDcuMjEzNzUgLTUgOCBDLTUuNjYgNy42NyAtNi4zMiA3LjM0IC03IDcgQy00LjY5IDQuNjkgLTIuMzggMi4zOCAwIDAgWiAiIGZpbGw9IiM0MDRDOTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDM5MiwzNzcpIi8+CjxwYXRoIGQ9Ik0wIDAgQy0wLjMzIDEuMzIgLTAuNjYgMi42NCAtMSA0IEMtMi42NSA0LjMzIC00LjMgNC42NiAtNiA1IEMtNiAzIC02IDMgLTQuNjg3NSAxLjM3NSBDLTMgMCAtMyAwIDAgMCBaICIgZmlsbD0iIzM5M0Y5MiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjI0LDY0OCkiLz4KPHBhdGggZD0iTTAgMCBDMC42NiAwIDEuMzIgMCAyIDAgQzAuODE0MTc2MyAzLjM3NTAzNjY5IC0wLjI3NTczNjg5IDUuNjQ3MjI3MzEgLTMgOCBDLTMgNi42OCAtMyA1LjM2IC0zIDQgQy0yLjAxIDMuNjcgLTEuMDIgMy4zNCAwIDMgQzAgMi4wMSAwIDEuMDIgMCAwIFogIiBmaWxsPSIjNDA0QTkxIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2NjAsNjEwKSIvPgo8cGF0aCBkPSJNMCAwIEMwLjk5IDAgMS45OCAwIDMgMCBDMS42MzAxNjQ5NyAzLjE2MTE1Nzc2IDEuMDEwOTM2MiAzLjk5MjcwOTIgLTIgNiBDLTIgMyAtMiAzIDAgMCBaICIgZmlsbD0iIzRCNTE5OCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzk4LDM4MykiLz4KPHBhdGggZD0iTTAgMCBDLTAuNjYgMS45OCAtMS4zMiAzLjk2IC0yIDYgQy0yLjk5IDUuNjcgLTMuOTggNS4zNCAtNSA1IEMtNC42MjUgMy4wNjI1IC00LjYyNSAzLjA2MjUgLTQgMSBDLTIgMCAtMiAwIDAgMCBaICIgZmlsbD0iIzQzNEM5MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDM2LDM0OSkiLz4KPC9zdmc+Cg=="
+                alt="CS">
+            <span class="nav-brand" id="navBrand">Sama</span>
+        </div>
+        <div class="nav-right">
+            <button class="nav-btn">
+                <i class="ph ph-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="nav-btn"><i class="ph ph-question"></i></button>
+        </div>
+    </nav>
+
+    <div class="app-shell">
+
+        <!-- ── SIDEBAR ── -->
+        <aside class="sidebar" id="sidebar">
+
+            <!-- collapse toggle -->
+            <button class="sb-toggle" id="sbToggle" title="Toggle sidebar">
+                <i class="ph ph-caret-left" id="toggleIcon"></i>
+            </button>
+
+            <!-- scrollable nav area -->
+            <div class="sb-nav">
+
+                <div class="sb-group">
+                    <span class="sb-group-label">Main</span>
+                    <button class="sb-item">
+                        <i class="ph ph-squares-four sb-icon"></i>
+                        <span class="sb-label">Overview</span>
+                    </button>
+                    <button class="sb-item active">
+                        <i class="ph ph-user-focus sb-icon"></i>
+                        <span class="sb-label">Find Therapist</span>
+                    </button>
+                    <button class="sb-item">
+                        <i class="ph ph-calendar-blank sb-icon"></i>
+                        <span class="sb-label">Sessions</span>
+                        <span class="sb-badge">2</span>
+                    </button>
+                </div>
+
+                <div class="sb-sep"></div>
+
+                <div class="sb-group">
+                    <span class="sb-group-label">Wellbeing</span>
+                    <button class="sb-item">
+                        <i class="ph ph-notebook sb-icon"></i>
+                        <span class="sb-label">Journal</span>
+                    </button>
+                    <button class="sb-item">
+                        <i class="ph ph-chart-line-up sb-icon"></i>
+                        <span class="sb-label">Progress</span>
+                    </button>
+                    <button class="sb-item">
+                        <i class="ph ph-first-aid sb-icon"></i>
+                        <span class="sb-label">Resources</span>
+                    </button>
+                </div>
+
+                <div class="sb-sep"></div>
+
+                <div class="sb-group">
+                    <span class="sb-group-label">Account</span>
+                    <button class="sb-item">
+                        <i class="ph ph-gear sb-icon"></i>
+                        <span class="sb-label">Settings</span>
+                    </button>
+                    <button class="sb-item">
+                        <i class="ph ph-shield-check sb-icon"></i>
+                        <span class="sb-label">Privacy</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- footer -->
+            <div class="sb-footer">
+                <button class="btn-emergency">
+                    <i class="ph ph-warning sb-icon"></i>
+                    <span class="emergency-label">Emergency Support</span>
+                </button>
+
+                <div class="sb-user" id="sbUser">
+                    <!-- logout popup -->
+                    <div class="logout-popup" id="logoutPopup">
+                        <button class="logout-btn">
+                            <i class="ph ph-sign-out"></i>
+                            Log out
+                        </button>
+                    </div>
+                    <div class="user-avatar">JD</div>
+                    <div class="user-info">
+                        <div class="user-name">Jordan Davies</div>
+                        <div class="user-role-text">Patient</div>
+                    </div>
+                    <i class="ph ph-dots-three-vertical user-more"></i>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ── MAIN PAGE ── -->
+        <div class="page">
+
+            <!-- sticky header -->
+            <div class="page-header">
+                <h1 class="page-title">Find Your Therapist</h1>
+                <p class="page-sub">Matched to your care profile using our semantic engine.</p>
+            </div>
+
+            <!-- scrollable body -->
+            <div class="page-body">
+
+                <!-- Search -->
+                <div class="search-bar">
+                    <div class="search-wrap">
+                        <i class="ph ph-magnifying-glass search-icon"></i>
+                        <input class="search-input" type="text" placeholder="Search by name, specialty, or approach...">
+                    </div>
+                    <div class="filter-chips">
+                        <button class="chip active">CBT</button>
+                        <button class="chip">Anxiety</button>
+                        <button class="chip">Trauma</button>
+                        <button class="chip">Family Therapy</button>
+                        <button class="chip">Depression</button>
+                        <button class="chip">Mindfulness</button>
+                        <button class="chip ai"><i class="ph ph-sparkle"></i> AI-Guided</button>
+                    </div>
+                </div>
+
+                <!-- Section label -->
+                <div class="section-label">
+                    <i class="ph ph-star"></i>
+                    Top matches for you
+                </div>
+
+                <!-- 2-col card grid -->
+                <div class="therapist-grid">
+
+                    <!-- Card 1 -->
+                    <div class="therapist-card">
+                        <div class="match-badge">98% Match</div>
+                        <div class="card-top">
+                            <div class="avatar-wrap">
+                                <div class="avatar-init">ER</div>
+                                <span class="online-dot"></span>
+                            </div>
+                            <div class="t-meta">
+                                <div class="t-name">Dr. Elena Rossi</div>
+                                <div class="t-rating"><i class="ph ph-star-fill star"></i>4.9 <span
+                                        style="opacity:.55">(124 reviews)</span></div>
+                                <div class="t-role">Clinical Psychologist</div>
+                            </div>
+                        </div>
+                        <div class="tag-row">
+                            <span class="tag">Cognitive Behavioral</span>
+                            <span class="tag">Trauma Informed</span>
+                            <span class="tag">Adults</span>
+                        </div>
+                        <p class="t-bio">Specializing in neuro-divergent friendly approaches and deep trauma processing
+                            for long-term healing.</p>
+                        <div class="card-foot">
+                            <span class="next-slot">Next: <strong>Today, 4:00 PM</strong></span>
+                            <button class="btn-book">Book Now</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="therapist-card">
+                        <div class="match-badge">95% Match</div>
+                        <div class="card-top">
+                            <div class="avatar-wrap">
+                                <div class="avatar-init">MT</div>
+                            </div>
+                            <div class="t-meta">
+                                <div class="t-name">Dr. Marcus Thorne</div>
+                                <div class="t-rating"><i class="ph ph-star-fill star"></i>4.8 <span
+                                        style="opacity:.55">(89 reviews)</span></div>
+                                <div class="t-role">Psychiatrist</div>
+                            </div>
+                        </div>
+                        <div class="tag-row">
+                            <span class="tag">Mood Disorders</span>
+                            <span class="tag">Med Management</span>
+                            <span class="tag">Bipolar</span>
+                        </div>
+                        <p class="t-bio">Expert in clinical psychopharmacology with a focus on holistic recovery and
+                            long-term wellbeing.</p>
+                        <div class="card-foot">
+                            <span class="next-slot">Next: <strong>Tomorrow, 10:30 AM</strong></span>
+                            <button class="btn-book">Book Now</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="therapist-card">
+                        <div class="match-badge">92% Match</div>
+                        <div class="card-top">
+                            <div class="avatar-wrap">
+                                <div class="avatar-init">SJ</div>
+                                <span class="online-dot"></span>
+                            </div>
+                            <div class="t-meta">
+                                <div class="t-name">Sarah Jenkins, LCSW</div>
+                                <div class="t-rating"><i class="ph ph-star-fill star"></i>5.0 <span
+                                        style="opacity:.55">(212 reviews)</span></div>
+                                <div class="t-role">Social Worker</div>
+                            </div>
+                        </div>
+                        <div class="tag-row">
+                            <span class="tag">Family Dynamics</span>
+                            <span class="tag">Child Therapy</span>
+                            <span class="tag">Play Therapy</span>
+                        </div>
+                        <p class="t-bio">Dedicated to healing family structures and helping children express complex
+                            emotions safely.</p>
+                        <div class="card-foot">
+                            <span class="next-slot">Next: <strong>Wed, 9:00 AM</strong></span>
+                            <button class="btn-book">Book Now</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 -->
+                    <div class="therapist-card">
+                        <div class="match-badge">89% Match</div>
+                        <div class="card-top">
+                            <div class="avatar-wrap">
+                                <div class="avatar-init">JV</div>
+                            </div>
+                            <div class="t-meta">
+                                <div class="t-name">Dr. Julian Vane</div>
+                                <div class="t-rating"><i class="ph ph-star-fill star"></i>4.7 <span
+                                        style="opacity:.55">(56 reviews)</span></div>
+                                <div class="t-role">Counsellor</div>
+                            </div>
+                        </div>
+                        <div class="tag-row">
+                            <span class="tag">Anxiety</span>
+                            <span class="tag">Work-Life Balance</span>
+                            <span class="tag">Mindfulness</span>
+                        </div>
+                        <p class="t-bio">Helping high-performance professionals manage burnout through mindfulness-based
+                            interventions.</p>
+                        <div class="card-foot">
+                            <span class="next-slot">Next: <strong>Friday, 1:00 PM</strong></span>
+                            <button class="btn-book">Book Now</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AI card -->
+                <div class="ai-card">
+                    <div class="ai-content">
+                        <div class="ai-eyebrow"><i class="ph ph-robot"></i>Deep Discovery AI</div>
+                        <h3 class="ai-title">Can't find the perfect match?</h3>
+                        <p class="ai-sub">Let our AI analyse your intake patterns to recommend specialised practitioners
+                            from our global network.</p>
+                        <button class="btn-ai"><i class="ph ph-sparkle"></i>Begin Deep Analysis</button>
+                    </div>
+                    <div class="ai-orb">
+                        <div class="ai-orb-inner"><i class="ph ph-sparkle"></i></div>
+                    </div>
+                </div>
+
+            </div><!-- .page-body -->
+        </div><!-- .page -->
+    </div><!-- .app-shell -->
+
+    <script>
+        // ── chip toggle ──
+        document.querySelectorAll(".chip:not(.ai)").forEach(c =>
+            c.addEventListener("click", () => c.classList.toggle("active"))
+        );
+
+        // ── sidebar collapse ──
+        const sbToggle = document.getElementById("sbToggle");
+        const toggleIcon = document.getElementById("toggleIcon");
+
+        sbToggle.addEventListener("click", () => {
+            const collapsed = document.body.classList.toggle("sb-collapsed");
+            toggleIcon.className = collapsed ? "ph ph-caret-right" : "ph ph-caret-left";
+        });
+
+        // ── logout popup ──
+        const sbUser = document.getElementById("sbUser");
+        const logoutPopup = document.getElementById("logoutPopup");
+
+        sbUser.addEventListener("click", (e) => {
+            logoutPopup.classList.toggle("visible");
+            e.stopPropagation();
+        });
+
+        document.addEventListener("click", () => logoutPopup.classList.remove("visible"));
+    </script>
+</body>
+
+</html>

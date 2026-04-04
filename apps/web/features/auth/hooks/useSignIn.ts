@@ -29,7 +29,7 @@ export function useSignIn() {
     }
 
     try {
-      const { data, error: signInError } = await signIn.email({
+      const { error: signInError } = await signIn.email({
         email,
         password,
         rememberMe,
@@ -38,11 +38,11 @@ export function useSignIn() {
       if (signInError) {
         setError(signInError.message || "Failed to sign in. Please check your credentials.");
       } else {
-        router.push("/onboarding");
+        router.push("/overview");
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -52,10 +52,10 @@ export function useSignIn() {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: "/onboarding",
+        callbackURL: "/overview",
       });
-    } catch (err: any) {
-      setError(err?.message || "Failed to sign in with Google");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign in with Google");
     }
   };
 
