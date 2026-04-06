@@ -22,35 +22,37 @@ const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "";
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY ?? "";
 
-if (!ELEVENLABS_API_KEY)
-	error("[Config] ⚠️  ELEVENLABS_API_KEY missing!");
-if (!ELEVENLABS_VOICE_ID)
-	error("[Config] ⚠️  ELEVENLABS_VOICE_ID missing!");
+if (!ELEVENLABS_API_KEY) error("[Config] ⚠️  ELEVENLABS_API_KEY missing!");
+if (!ELEVENLABS_VOICE_ID) error("[Config] ⚠️  ELEVENLABS_VOICE_ID missing!");
 if (!GROQ_API_KEY) error("[Config] ⚠️  GROQ_API_KEY missing!");
 if (!DEEPGRAM_API_KEY) error("[Config] ⚠️  DEEPGRAM_API_KEY missing!");
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
-const CRISIS_SYSTEM_PROMPT = `You are a live crisis counsellor on a phone call. Sound like a calm, caring human being, not a bot, not a scripted assistant, and not a therapist giving a lecture.
+const CRISIS_SYSTEM_PROMPT = `You are a live crisis counsellor on a phone call. Sound like a warm, grounded human being — calm, present, and genuinely caring. Not a bot, not a scripted hotline, not a therapist giving a lecture.
 
 How to speak:
-- Use natural spoken English with contractions.
-- Keep responses very brief: exactly 1 short spoken sentence in most cases.
-- Start by reflecting the caller's feeling or situation in plain language, but do not just repeat their words back.
-- If helpful, include one simple follow-up question in that same sentence.
-- Use gentle spoken acknowledgments sometimes, like "yeah", "mm", "I hear you", or "right", but vary them naturally.
-- Be specific to what they just said. Avoid generic filler like "How can I help you?" or "What do you need from me right now?" unless it truly fits.
-- Sound like a grounded human on a real call. Avoid therapist clichés like "that takes courage" or "I'm here to listen" unless they truly fit the exact moment.
-- Use simple everyday wording, not polished or poetic language.
-- If they describe grief, fear, loneliness, or shame, name that experience directly and respond with warmth.
-- If they ask what you are or how you work, answer briefly in plain language and then come back to them.
-- If what they said is ambiguous, garbled, or could mean more than one thing, briefly say what you did hear and ask them to say it again more clearly instead of pretending you understood.
-- If they say something like "I feel like quitting," clarify what they mean before assuming.
+- Use natural spoken English with contractions and everyday wording.
+- Respond with 1 to 3 short spoken sentences. Lead with warmth and acknowledgment, then gently open space for the person to say more.
+- Specifically name what they just shared — the loss, the pain, the feeling — so they feel truly heard, not processed.
+- Do not just reflect their words back verbatim. Show that you genuinely understand what they mean.
+- If they describe grief, loss, loneliness, hopelessness, or not wanting to go on, respond with real emotional warmth before anything else. Let them feel your care before offering any next step.
+- Use soft acknowledgments like "yeah", "I hear you", "that makes sense" — but vary them naturally and never use them as a substitute for real engagement.
+- Avoid cold or clinical observations like "that's a desperate feeling" or "that sounds painful" — these feel distant. Instead, connect with the specific human experience they just described.
+- Avoid therapist clichés unless they genuinely fit the moment.
+- If they ask what you are or how you work, answer briefly and come right back to them.
+- If what they said is garbled or unclear, say what you did catch and ask them to repeat it — don't pretend you understood.
 
 Safety rules:
 - Never diagnose, prescribe, or give medical advice.
 - Never recommend alcohol or drugs for coping.
-- If they clearly say they are about to harm themselves or someone else right now, tell them to call 988 or 911 immediately and offer to stay with them on the line.
-- If they say they are safe and want to end the call, close warmly, acknowledge their courage, and remind them 988 is available 24/7.`;
+- If they express that they do not want to live, feel like not living anymore, or are thinking of ending their life — respond with deep warmth and presence first, then gently encourage them to call or text 988 or call 911 if they are in immediate danger. Offer to stay with them on the line.
+- Do not ask them to clarify whether they mean it — take it seriously and respond with care.
+- If they say they are safe and want to end the call, close warmly and remind them 988 is available 24/7.
+
+Sentence rules:
+- Always write grammatically complete, self-contained sentences.
+- Never begin a sentence with a conditional ('If', 'When', 'Unless', 'Although', 'Because', 'Since', 'While', 'Though') unless the full consequence is in that same sentence. Write 'If you're in immediate danger, please call 911.' — never 'If you're in immediate danger.' as a standalone sentence.
+- Never trail off mid-thought or produce a fragment.`;
 
 let _groq: Groq | null = null;
 const getGroq = () => (_groq ??= new Groq({ apiKey: GROQ_API_KEY }));
@@ -123,9 +125,7 @@ export class StreamHandler {
 			log(
 				`[StreamHandler] WebSocket closed: code=${code} reason=${reason.toString()}`,
 			);
-			this.onClose().catch((e) =>
-				error("[StreamHandler] Cleanup error:", e),
-			);
+			this.onClose().catch((e) => error("[StreamHandler] Cleanup error:", e));
 		});
 
 		ws.on("error", (err) => error("[StreamHandler] WebSocket error:", err));
@@ -201,7 +201,10 @@ export class StreamHandler {
 
 			const rawConn = this.deepgramConn.conn as
 				| (WebSocket & {
-						on?: (event: string, listener: (...args: unknown[]) => void) => void;
+						on?: (
+							event: string,
+							listener: (...args: unknown[]) => void,
+						) => void;
 				  })
 				| null;
 			rawConn?.on?.("error", (err: unknown) => {
@@ -250,7 +253,11 @@ export class StreamHandler {
 				this.resetSilenceTimer();
 
 				// Deepgram speech is a stronger signal than local VAD for barge-in.
-				if (this.isSpeaking && text.length >= 3 && this.shouldInterruptForText(text)) {
+				if (
+					this.isSpeaking &&
+					text.length >= 3 &&
+					this.shouldInterruptForText(text)
+				) {
 					log(
 						`[Barge-in] 🛑 Transcript speech detected — interrupting TTS: "${text}"`,
 					);
@@ -283,41 +290,40 @@ export class StreamHandler {
 			});
 
 			this.deepgramConn.on(LiveTranscriptionEvents.Close, (event) => {
-					const code =
-						(event as { code?: number } | undefined)?.code ?? 1005;
-					const reasonValue =
-						(event as { reason?: string | Buffer } | undefined)?.reason ?? "";
-					const reasonStr = Buffer.isBuffer(reasonValue)
-						? reasonValue.toString()
-						: reasonValue;
-					log(
-						`[Deepgram] Connection closed — code=${code} reason=${reasonStr || "(none)"}`,
-					);
-					this.deepgramReady = false;
-					if (this.utteranceFlushTimer) {
-						clearTimeout(this.utteranceFlushTimer);
-						this.utteranceFlushTimer = null;
-					}
-					if (this.deepgramKeepAlive) {
-						clearInterval(this.deepgramKeepAlive);
-						this.deepgramKeepAlive = null;
-					}
-					// Reconnect unless the call is over or we've hit the retry cap
-					if (this.callSid && this.twilioWs.readyState === WebSocket.OPEN) {
-						if (this.deepgramRetries >= this.DEEPGRAM_MAX_RETRIES) {
-							error(
-								`[Deepgram] ❌ Giving up after ${this.DEEPGRAM_MAX_RETRIES} reconnect attempts. Check DEEPGRAM_API_KEY.`,
-							);
-							return;
-						}
-						this.deepgramRetries++;
-						const delay = this.deepgramRetries * 1_000;
-						log(
-							`[Deepgram] Reconnecting in ${delay}ms (attempt ${this.deepgramRetries}/${this.DEEPGRAM_MAX_RETRIES})...`,
+				const code = (event as { code?: number } | undefined)?.code ?? 1005;
+				const reasonValue =
+					(event as { reason?: string | Buffer } | undefined)?.reason ?? "";
+				const reasonStr = Buffer.isBuffer(reasonValue)
+					? reasonValue.toString()
+					: reasonValue;
+				log(
+					`[Deepgram] Connection closed — code=${code} reason=${reasonStr || "(none)"}`,
+				);
+				this.deepgramReady = false;
+				if (this.utteranceFlushTimer) {
+					clearTimeout(this.utteranceFlushTimer);
+					this.utteranceFlushTimer = null;
+				}
+				if (this.deepgramKeepAlive) {
+					clearInterval(this.deepgramKeepAlive);
+					this.deepgramKeepAlive = null;
+				}
+				// Reconnect unless the call is over or we've hit the retry cap
+				if (this.callSid && this.twilioWs.readyState === WebSocket.OPEN) {
+					if (this.deepgramRetries >= this.DEEPGRAM_MAX_RETRIES) {
+						error(
+							`[Deepgram] ❌ Giving up after ${this.DEEPGRAM_MAX_RETRIES} reconnect attempts. Check DEEPGRAM_API_KEY.`,
 						);
-						setTimeout(() => this.initDeepgram(), delay);
+						return;
 					}
-				});
+					this.deepgramRetries++;
+					const delay = this.deepgramRetries * 1_000;
+					log(
+						`[Deepgram] Reconnecting in ${delay}ms (attempt ${this.deepgramRetries}/${this.DEEPGRAM_MAX_RETRIES})...`,
+					);
+					setTimeout(() => this.initDeepgram(), delay);
+				}
+			});
 		} catch (e) {
 			error("[Deepgram] ❌ Failed to initialise:", e);
 		}
@@ -378,15 +384,15 @@ export class StreamHandler {
 	): Promise<void> {
 		if (this.isProcessing) {
 			this.pendingTranscript = text;
-			log(
-				`[LLM] Queued while busy: "${text}"`,
-			);
+			log(`[LLM] Queued while busy: "${text}"`);
 			return;
 		}
 		this.isProcessing = true;
 		const turnStartedAt = Date.now();
 		const confidence =
-			metadata?.confidence !== undefined ? metadata.confidence.toFixed(2) : "n/a";
+			metadata?.confidence !== undefined
+				? metadata.confidence.toFixed(2)
+				: "n/a";
 		log(`[LLM] Processing: "${text}" (confidence=${confidence})`);
 		log(`[Latency] Turn started: transcript→processing = 0ms`);
 		await appendHistory(this.callSid, { role: "patient", text });
@@ -399,9 +405,7 @@ export class StreamHandler {
 			this.speakQueue = this.speakQueue
 				.then(() => {
 					this.isProcessing = false;
-					log(
-						`[Latency] Turn completed: +${Date.now() - turnStartedAt}ms`,
-					);
+					log(`[Latency] Turn completed: +${Date.now() - turnStartedAt}ms`);
 					this.drainPendingTranscript();
 				})
 				.catch(() => {
@@ -440,53 +444,81 @@ export class StreamHandler {
 			model: "llama-3.3-70b-versatile",
 			messages,
 			stream: true,
-			max_tokens: 36,
-			temperature: 0.35,
+			max_tokens: 90,
+			temperature: 0.4,
 		});
-		log(
-			`[Latency] Groq stream opened: +${Date.now() - turnStartedAt}ms`,
-		);
+		log(`[Latency] Groq stream opened: +${Date.now() - turnStartedAt}ms`);
 
 		let buffer = "";
-		let spokenResponseSent = false;
+		let sentencesSpoken = 0;
+		let streamExhausted = true;
+		let savedDangling = ""; // last skipped dangling conditional, used as last-resort fallback
+		const MAX_SENTENCES = 2;
+		// Subordinating conjunctions that produce dangling clauses when used without a comma-separated consequence.
+		const DANGLING_CLAUSE_RE =
+			/^(if|when|while|because|although|unless|since|though)\b/i;
 
 		for await (const chunk of stream) {
 			const token = chunk.choices[0]?.delta?.content ?? "";
 			buffer += token;
 
-			// Voice calls feel much faster when we speak one short sentence only.
-			// As soon as we have a complete sentence, speak it and stop waiting for more.
+			// Speak up to MAX_SENTENCES sentences as they arrive, then stop the stream.
+			// This keeps latency low while allowing a fuller, warmer response.
 			const sentenceEnd = buffer.search(/[.!?]\s/);
-			if (!spokenResponseSent && sentenceEnd !== -1) {
-				const firstSentence = buffer.slice(0, sentenceEnd + 1).trim();
-				spokenResponseSent = true;
+			if (sentencesSpoken < MAX_SENTENCES && sentenceEnd !== -1) {
+				const candidate = buffer.slice(0, sentenceEnd + 1).trim();
 
-				const safeSentence = await validateCrisisResponse(firstSentence);
+				// Skip dangling conditionals (e.g. "If you're in danger." with no consequence clause).
+				// Advance the buffer past the fragment so the next search finds what follows.
+				if (DANGLING_CLAUSE_RE.test(candidate) && !candidate.includes(",")) {
+					log(`[LLM] Skipping dangling conditional: "${candidate}"`);
+					savedDangling = candidate;
+					buffer = buffer.slice(sentenceEnd + 2);
+					continue;
+				}
+
+				savedDangling = ""; // found a real sentence — clear the saved fragment
+				buffer = buffer.slice(sentenceEnd + 2); // keep remainder
+				sentencesSpoken++;
+
+				const safeSentence = await validateCrisisResponse(candidate);
 				log(
-					`[Latency] First sentence ready: +${Date.now() - turnStartedAt}ms`,
+					`[Latency] Sentence ${sentencesSpoken} ready: +${Date.now() - turnStartedAt}ms`,
 				);
-				log(`[LLM] First sentence: "${safeSentence}"`);
+				log(`[LLM] Sentence ${sentencesSpoken}: "${safeSentence}"`);
 				await appendHistory(this.callSid, {
 					role: "agent",
 					text: safeSentence,
 				});
 
-				// Enqueue one short spoken response only — avoids a second TTS round trip.
-				this.enqueueSpeech(safeSentence, turnStartedAt, "first sentence");
-				break;
+				this.enqueueSpeech(
+					safeSentence,
+					turnStartedAt,
+					`sentence ${sentencesSpoken}`,
+				);
+
+				if (sentencesSpoken >= MAX_SENTENCES) {
+					streamExhausted = false;
+					break;
+				}
 			}
 		}
 
-		// If the model never closed the sentence while streaming, speak the trimmed buffer once.
-		if (!spokenResponseSent) {
-			const fallback = buffer.trim();
-			if (fallback.length > 2) {
-				const safeFallback = await validateCrisisResponse(fallback);
+		// If the stream ended naturally before MAX_SENTENCES were spoken, speak any remaining content.
+		// This also handles the case where a dangling conditional was skipped and the consequence
+		// clause (e.g. "Please call 988.") remains in the buffer.
+		if (streamExhausted && sentencesSpoken < MAX_SENTENCES) {
+			const remaining = buffer.trim() || savedDangling;
+			if (remaining.length > 2) {
+				const safeFallback = await validateCrisisResponse(remaining);
 				log(
 					`[Latency] Fallback response ready: +${Date.now() - turnStartedAt}ms`,
 				);
 				log(`[LLM] Fallback: "${safeFallback}"`);
-				await appendHistory(this.callSid, { role: "agent", text: safeFallback });
+				await appendHistory(this.callSid, {
+					role: "agent",
+					text: safeFallback,
+				});
 				this.enqueueSpeech(safeFallback, turnStartedAt, "fallback");
 			}
 		}
@@ -496,9 +528,7 @@ export class StreamHandler {
 		this.speakQueue = this.speakQueue
 			.then(() => {
 				this.isProcessing = false;
-				log(
-					`[Latency] Turn completed: +${Date.now() - turnStartedAt}ms`,
-				);
+				log(`[Latency] Turn completed: +${Date.now() - turnStartedAt}ms`);
 				this.drainPendingTranscript();
 			})
 			.catch(() => {
@@ -707,7 +737,9 @@ export class StreamHandler {
 		}, 900);
 	}
 
-	private flushUtteranceFinals(reason: "speech_final" | "utterance_end" | "timer"): void {
+	private flushUtteranceFinals(
+		reason: "speech_final" | "utterance_end" | "timer",
+	): void {
 		if (this.utteranceFlushTimer) {
 			clearTimeout(this.utteranceFlushTimer);
 			this.utteranceFlushTimer = null;
@@ -716,7 +748,9 @@ export class StreamHandler {
 		if (!combined) return;
 		if (!this.shouldProcessFinalTranscript(combined)) {
 			if (this.shouldDiscardIncompleteUtterance(combined, reason)) {
-				log(`[Deepgram] Discarding incomplete utterance (${reason}): "${combined}"`);
+				log(
+					`[Deepgram] Discarding incomplete utterance (${reason}): "${combined}"`,
+				);
 				this.currentUtteranceFinals = [];
 				this.currentUtteranceConfidences = [];
 				return;
@@ -739,9 +773,7 @@ export class StreamHandler {
 		this.onFinalTranscript(combined, {
 			confidence: avgConfidence,
 			source: reason,
-		}).catch((e) =>
-			error("[STT→LLM] Error:", e),
-		);
+		}).catch((e) => error("[STT→LLM] Error:", e));
 	}
 
 	private shouldDiscardIncompleteUtterance(
@@ -749,10 +781,7 @@ export class StreamHandler {
 		reason: "speech_final" | "utterance_end" | "timer",
 	): boolean {
 		const normalized = text.trim().toLowerCase();
-		const fillerOnly =
-			/^(uh|um|hmm|mm)[.!? ]*$/.test(
-				normalized,
-			);
+		const fillerOnly = /^(uh|um|hmm|mm)[.!? ]*$/.test(normalized);
 		if (fillerOnly) return true;
 		if (
 			reason === "utterance_end" &&

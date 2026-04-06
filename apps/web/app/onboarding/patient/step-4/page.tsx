@@ -15,12 +15,28 @@ import {
 	SealCheck,
 	ShieldCheck,
 } from "@phosphor-icons/react";
-import { Checkbox, Input, PhoneInput, isValidPhoneNumber } from "@repo/ui";
+import {
+	Checkbox,
+	Combobox,
+	Input,
+	PhoneInput,
+	isValidPhoneNumber,
+} from "@repo/ui";
 import { useRouter } from "next/navigation";
 
 import { useOnboardingRedirect } from "@/features/onboarding/hooks/useOnboardingRedirect";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { getProfile, updatePatientProfile } from "../../actions";
+
+const RELATIONSHIP_OPTIONS = [
+	{ value: "Spouse / Partner", label: "Spouse / Partner" },
+	{ value: "Parent", label: "Parent" },
+	{ value: "Child", label: "Child" },
+	{ value: "Sibling", label: "Sibling" },
+	{ value: "Friend", label: "Friend" },
+	{ value: "Guardian", label: "Guardian" },
+	{ value: "Other", label: "Other" },
+];
 
 export default function PatientStep4() {
 	const router = useRouter();
@@ -32,6 +48,10 @@ export default function PatientStep4() {
 	);
 	const [ecLastName, setEcLastName] = useLocalStorage("patient_ecLastName", "");
 	const [ecPhone, setEcPhone] = useLocalStorage("patient_ecPhone", "");
+	const [ecRelationship, setEcRelationship] = useLocalStorage(
+		"patient_ecRelationship",
+		"",
+	);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState("");
 
@@ -74,7 +94,7 @@ export default function PatientStep4() {
 			if (result.error) throw new Error(result.error);
 			// Artificial delay to show saving state and look premium
 			await new Promise((resolve) => setTimeout(resolve, 1500));
-			router.push("/find-therapist");
+			router.push("/overview");
 		} catch (e) {
 			setError(
 				e instanceof Error ? e.message : "Failed to save. Please try again.",
@@ -115,6 +135,7 @@ export default function PatientStep4() {
 							value={ecFirstName}
 							onChange={(e) => setEcFirstName(e.target.value)}
 							placeholder="e.g. Morgan"
+							className="bg-[var(--surface-container-low)] border-0 border-b-2 border-b-transparent rounded-[var(--r-sm)] px-[0.85rem] py-[0.7rem] h-auto text-[0.9rem] text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)] placeholder:opacity-55 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-b-[var(--primary)] focus-visible:bg-[var(--surface-container-lowest)] focus-visible:shadow-[0_10px_30px_-10px_rgba(0,50,101,0.08)] transition-[background,border-color] duration-[180ms]"
 						/>
 					</FormGroup>
 					<FormGroup>
@@ -123,6 +144,7 @@ export default function PatientStep4() {
 							value={ecLastName}
 							onChange={(e) => setEcLastName(e.target.value)}
 							placeholder="e.g. Chen"
+							className="bg-[var(--surface-container-low)] border-0 border-b-2 border-b-transparent rounded-[var(--r-sm)] px-[0.85rem] py-[0.7rem] h-auto text-[0.9rem] text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)] placeholder:opacity-55 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-b-[var(--primary)] focus-visible:bg-[var(--surface-container-lowest)] focus-visible:shadow-[0_10px_30px_-10px_rgba(0,50,101,0.08)] transition-[background,border-color] duration-[180ms]"
 						/>
 					</FormGroup>
 				</FormRow2>
@@ -134,6 +156,17 @@ export default function PatientStep4() {
 						onChange={setEcPhone}
 						placeholder="98765 43210"
 						defaultCountry="IN"
+					/>
+				</FormGroup>
+
+				<FormGroup>
+					<FormLabel>Relationship</FormLabel>
+					<Combobox
+						options={RELATIONSHIP_OPTIONS}
+						value={ecRelationship}
+						onChange={setEcRelationship}
+						placeholder="Select relationship"
+						searchPlaceholder="Search…"
 					/>
 				</FormGroup>
 			</FormCard>

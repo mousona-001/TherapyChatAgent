@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { Logger, OnModuleInit } from "@nestjs/common";
 import {
 	ConnectedSocket,
 	MessageBody,
@@ -9,6 +9,7 @@ import {
 	WebSocketServer,
 } from "@nestjs/websockets";
 import { eq } from "drizzle-orm";
+import Redis from "ioredis";
 import { Server, Socket } from "socket.io";
 import { ConnectionService } from "../../connection/application/connection.service";
 import { CrisisService } from "../../crisis/application/crisis.service";
@@ -17,15 +18,43 @@ import { ChatService } from "../application/chat.service";
 import { chatSession } from "../infrastructure/schemas/chat.schema";
 
 @WebSocketGateway({ namespace: "/chat", cors: { origin: "*" } })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+	implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
 	@WebSocketServer() server!: Server;
 	private readonly logger = new Logger(ChatGateway.name);
+	private readonly redisSub = new Redis(
+		process.env.REDIS_URL || "redis://localhost:6379",
+	);
 
 	constructor(
 		private readonly chatService: ChatService,
 		private readonly connectionService: ConnectionService,
 		private readonly crisisService: CrisisService,
 	) {}
+
+	async onModuleInit() {
+		await this.redisSub.subscribe("crisis:therapist_alert");
+		this.redisSub.on("message", (channel, message) => {
+			if (channel === "crisis:therapist_alert") {
+				try {
+					const { therapistUserId, patientId } = JSON.parse(message) as {
+						therapistUserId: string;
+						patientId: string;
+					};
+					this.server.to(`user:${therapistUserId}`).emit("crisis:alert", {
+						patientId,
+						message: "A patient is in crisis. Please respond immediately.",
+					});
+					this.logger.warn(
+						`🚨 Emitted crisis:alert to therapist room: user:${therapistUserId}`,
+					);
+				} catch (err) {
+					this.logger.error(`Failed to parse crisis:therapist_alert: ${err}`);
+				}
+			}
+		});
+	}
 
 	// ── Connection Lifecycle ─────────────────────────────────────────────────────
 

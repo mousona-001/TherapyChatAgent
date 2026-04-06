@@ -1,7 +1,9 @@
 "use client";
 
 import { SidebarProvider } from "@repo/ui";
-import { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { ReactNode, useEffect } from "react";
+import { checkOnboardingStatus } from "../../../app/onboarding/actions";
 import { AppSidebar } from "./AppSidebar";
 import { UnreadProvider } from "./UnreadContext";
 
@@ -10,6 +12,25 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+	const router = useRouter();
+
+	useEffect(() => {
+		let cancelled = false;
+		checkOnboardingStatus().then((status) => {
+			if (cancelled) return;
+			if ("error" in status) return;
+			if (!status.complete) {
+				const target = status.role
+					? `/onboarding/${status.role}/step-${status.step}`
+					: "/onboarding";
+				router.replace(target);
+			}
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [router]);
+
 	return (
 		<UnreadProvider>
 			<SidebarProvider>
