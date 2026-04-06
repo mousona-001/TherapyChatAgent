@@ -679,7 +679,7 @@ export default function FindTherapistPage() {
 																		handleRequestChat(t.therapistId)
 																	}
 																	disabled={
-																		requestingId !== null ||
+																		requestingId === t.therapistId ||
 																		requestedIds.has(t.therapistId)
 																	}
 																>
@@ -984,7 +984,7 @@ export default function FindTherapistPage() {
 																		handleRequestChat(t.therapistId)
 																	}
 																	disabled={
-																		requestingId !== null ||
+																		requestingId === t.therapistId ||
 																		requestedIds.has(t.therapistId)
 																	}
 																>
